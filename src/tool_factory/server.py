@@ -16,8 +16,12 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from .executor import SandboxExecutor
-from .persistence import ToolDefinition, ToolStore
+try:
+    from .executor import SandboxExecutor
+    from .persistence import ToolDefinition, ToolStore
+except ImportError:
+    from executor import SandboxExecutor  # type: ignore[no-redef]
+    from persistence import ToolDefinition, ToolStore  # type: ignore[no-redef]
 
 # --- Configuration ---
 
