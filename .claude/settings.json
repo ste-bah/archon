@@ -1,0 +1,456 @@
+{
+  "env": {
+    "CLAUDE_FLOW_AUTO_COMMIT": "false",
+    "CLAUDE_FLOW_AUTO_PUSH": "false",
+    "CLAUDE_FLOW_HOOKS_ENABLED": "true",
+    "CLAUDE_FLOW_TELEMETRY_ENABLED": "true",
+    "CLAUDE_FLOW_REMOTE_EXECUTION": "true",
+    "CLAUDE_FLOW_CHECKPOINTS_ENABLED": "true",
+    "NODE_OPTIONS": "--max-old-space-size=1536",
+    "PIPELINE_ENGINE": "cli"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npx tsx:*)",
+      "Bash(cd:*)",
+      "Bash(wc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx tsc:*)",
+      "Bash(sleep:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(kill:*)",
+      "Bash(tail:*)",
+      "Bash(head:*)",
+      "Bash(test:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run test:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run memory:*)",
+      "Bash(npm run daemon:*)",
+      "Bash(npm run ucm:*)",
+      "Bash(npm run observe:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git config:*)",
+      "Bash(git tag:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(jq:*)",
+      "Bash(node:*)",
+      "Bash(cat > /tmp/:*)",
+      "Bash(cat>/tmp/:*)",
+      "Bash(cat:*)",
+      "Write(/tmp/**)",
+      "Write(/Volumes/Externalwork/projects/claudeflow-testing/tmp/**)",
+      "Bash(which:*)",
+      "Bash(pwd)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(npx tsx src/god-agent/universal/cli.ts status)",
+      "Bash(npx tsx src/god-agent/universal/cli.ts ask:*)",
+      "Bash(npx tsx src/god-agent/universal/cli.ts code:*)",
+      "Bash(npx tsx src/god-agent/universal/cli.ts research:*)",
+      "Bash(npx tsx src/god-agent/universal/cli.ts write:*)",
+      "Bash(npx tsx src/god-agent/universal/cli.ts learn:*)",
+      "Bash(npx tsx src/god-agent/universal/cli.ts query:*)",
+      "Bash(npx tsx src/god-agent/universal/cli.ts feedback:*)",
+      "Bash(npx tsx src/god-agent/universal/cli.ts help:*)",
+      "Bash(timeout 10 npx tsx src/god-agent/universal/cli.ts:*)",
+      "mcp__serena__find_symbol",
+      "mcp__serena__list_dir",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__read_file",
+      "mcp__serena__find_referencing_symbols",
+      "mcp__serena__find_file",
+      "mcp__serena__list_memories",
+      "mcp__serena__read_memory",
+      "mcp__serena__get_current_config",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__replace_regex",
+      "mcp__serena__insert_after_symbol",
+      "mcp__serena__insert_before_symbol",
+      "mcp__serena__replace_symbol_body",
+      "mcp__serena__write_memory",
+      "mcp__memorygraph__store_memory",
+      "mcp__memorygraph__search_memories",
+      "mcp__memorygraph__recall_memories",
+      "mcp__memorygraph__get_memory",
+      "mcp__memorygraph__update_memory",
+      "mcp__memorygraph__delete_memory",
+      "mcp__memorygraph__create_relationship",
+      "mcp__memorygraph__get_related_memories",
+      "mcp__memorygraph__contextual_search",
+      "mcp__memorygraph__get_memory_statistics",
+      "mcp__memorygraph__search_relationships_by_context",
+      "mcp__lancedb-memory__embed_and_store",
+      "mcp__lancedb-memory__store_embedding",
+      "mcp__lancedb-memory__search_similar",
+      "mcp__lancedb-memory__retrieve_context",
+      "mcp__lancedb-memory__delete_embedding",
+      "mcp__lancedb-memory__dual_store",
+      "mcp__lancedb-memory__reconcile",
+      "mcp__lancedb-memory__drain_queue",
+      "mcp__lancedb-memory__stats",
+      "mcp__rocketchat__send_message",
+      "mcp__rocketchat__read_messages",
+      "mcp__rocketchat__dm_send",
+      "mcp__rocketchat__dm_read",
+      "mcp__rocketchat__list_channels",
+      "mcp__rocketchat__search_messages",
+      "mcp__rocketchat__get_channel_info",
+      "mcp__rocketchat__upload_file",
+      "mcp__rocketchat__download_file",
+      "WebSearch",
+      "WebFetch",
+      "mcp__markdownify-mcp__pdf-to-markdown",
+      "mcp__markdownify-mcp__image-to-markdown",
+      "mcp__markdownify-mcp__webpage-to-markdown",
+      "mcp__markdownify-mcp__docx-to-markdown",
+      "mcp__markdownify-mcp__xlsx-to-markdown",
+      "mcp__markdownify-mcp__pptx-to-markdown",
+      "mcp__markdownify-mcp__audio-to-markdown",
+      "mcp__markdownify-mcp__youtube-to-markdown",
+      "mcp__markdownify-mcp__bing-search-to-markdown",
+      "mcp__markdownify-mcp__get-markdown-file",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_fill_form",
+      "mcp__plugin_playwright_playwright__browser_type",
+      "mcp__plugin_playwright_playwright__browser_press_key",
+      "mcp__plugin_playwright_playwright__browser_navigate_back",
+      "mcp__plugin_playwright_playwright__browser_tabs",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "mcp__plugin_playwright_playwright__browser_hover",
+      "mcp__plugin_playwright_playwright__browser_select_option",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_run_code",
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "mcp__plugin_playwright_playwright__browser_network_requests",
+      "mcp__plugin_playwright_playwright__browser_file_upload",
+      "mcp__plugin_playwright_playwright__browser_handle_dialog",
+      "mcp__plugin_playwright_playwright__browser_drag",
+      "mcp__plugin_playwright_playwright__browser_install",
+      "mcp__video-analyzer__analyze_video",
+      "mcp__video-analyzer__summarize_video",
+      "mcp__video-analyzer__extract_knowledge",
+      "mcp__video-analyzer__search_video",
+      "mcp__video-analyzer__extract_transcript"
+    ],
+    "deny": [
+      "Bash(rm -rf /)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; SKILL=$(cat | jq -r \".tool_input.skill // empty\"); if [ \"$SKILL\" = \"god-code\" ] && [ -f \"$ROOT/.claude/hooks/god-code-enforcement-v2.sh\" ]; then source \"$ROOT/.claude/hooks/god-code-enforcement-v2.sh\" && activate_pipeline; elif [ \"$SKILL\" = \"god-code\" ]; then echo \"0\" > \"$ROOT/.claude/runtime/.god-code-active\"; echo \"\ud83d\udd12 GOD-CODE PIPELINE MODE ACTIVATED - Direct Write/Edit blocked until Task agents spawned\"; fi; [ -x \"$ROOT/.claude/hooks/coding-pipeline-pre.sh\" ] && \"$ROOT/.claude/hooks/coding-pipeline-pre.sh\" || true'"
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/agent-prompt-enforcer.sh\" ] && \"$ROOT/.claude/hooks/agent-prompt-enforcer.sh\" || echo \"{\\\"decision\\\": \\\"allow\\\"}\"'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null); if [ -n \"$ROOT\" ] && [ -f \"$ROOT/.claude/runtime/.god-code-active\" ]; then if [ -f \"$ROOT/.claude/hooks/god-code-enforcement-v2.sh\" ]; then source \"$ROOT/.claude/hooks/god-code-enforcement-v2.sh\" && increment_agent_count; else COUNT=$(cat \"$ROOT/.claude/runtime/.god-code-active\" 2>/dev/null || echo 0); echo $((COUNT + 1)) > \"$ROOT/.claude/runtime/.god-code-active\"; echo \"\ud83d\udcca Pipeline Task #$((COUNT + 1)) spawned\"; fi; fi; [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/pre-task.sh\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; \"$ROOT/.claude/hooks/pre-task.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -f \"$ROOT/scripts/hooks/ucm-desc-injector.ts\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; npx tsx \"$ROOT/scripts/hooks/ucm-desc-injector.ts\" || true'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/project-root-enforcer.sh\" ] && cat | \"$ROOT/.claude/hooks/project-root-enforcer.sh\" || echo \"{\\\"decision\\\": \\\"allow\\\"}\"'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/vitest-rate-limiter.sh\" ] && cat | \"$ROOT/.claude/hooks/vitest-rate-limiter.sh\" || echo \"{\\\"decision\\\": \\\"allow\\\"}\"'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/block-heredoc.sh\" ] && \"$ROOT/.claude/hooks/block-heredoc.sh\" || echo \"{\\\"decision\\\": \\\"allow\\\"}\"'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/pipeline-integrity-guard.sh\" ] && \"$ROOT/.claude/hooks/pipeline-integrity-guard.sh\" || true'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; if [ -f \"$ROOT/.claude/runtime/.god-code-active\" ]; then if [ -f \"$ROOT/.claude/hooks/god-code-enforcement-v2.sh\" ]; then FILE_PATH=$(cat | jq -r \".tool_input.file_path // .tool_input.path // empty\"); TOOL_NAME=$(cat | jq -r \".tool_name // empty\"); source \"$ROOT/.claude/hooks/god-code-enforcement-v2.sh\" && check_write_permission \"$TOOL_NAME\" \"$FILE_PATH\"; else TASK_COUNT=$(cat \"$ROOT/.claude/runtime/.god-code-active\" 2>/dev/null || echo 0); if [ \"$TASK_COUNT\" -lt 7 ]; then echo \"\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\"; echo \"\ud83d\udeab BLOCKED: /god-code Pipeline Violation\"; echo \"\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\"; echo \"You tried to use Write/Edit directly.\"; echo \"Task agents spawned: $TASK_COUNT (minimum required: 7)\"; echo \"\"; echo \"REQUIRED: Use Task(\\\"task-analyzer\\\", ...) first!\"; echo \"Pipeline must reach Phase 4 before writing files.\"; echo \"\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\"; exit 1; fi; fi; fi; cat | jq -r \".tool_input.file_path // .tool_input.path // empty\" | tr \"\\n\" \"\\0\" | xargs -0 -I {} || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/personality-behavioral-gate.sh\" ] && cat | \"$ROOT/.claude/hooks/personality-behavioral-gate.sh\" || true'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; SKILL=$(cat | jq -r \".tool_input.skill // empty\"); if [ \"$SKILL\" = \"god-code\" ] && [ -x \"$ROOT/.claude/hooks/coding-pipeline-post.sh\" ]; then \"$ROOT/.claude/hooks/coding-pipeline-post.sh\"; fi || true'"
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/post-task.sh\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; \"$ROOT/.claude/hooks/post-task.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -f \"$ROOT/scripts/hooks/ucm-post-task-archive.ts\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; npx tsx \"$ROOT/scripts/hooks/ucm-post-task-archive.ts\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'echo \"[memory] Subagent complete. If key decisions or patterns were produced, store to MemoryGraph.\"'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/scripts/archon/personality-phase-check.sh\" ] && cat | \"$ROOT/scripts/archon/personality-phase-check.sh\" || true'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; FILE=$(cat | jq -r \".tool_input.file_path // .tool_input.path // empty\"); [ -n \"$FILE\" ] && [ -x \"$ROOT/.claude/hooks/leann-index-file.sh\" ] && \"$ROOT/.claude/hooks/leann-index-file.sh\" \"$FILE\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/code-modify-tracker.sh\" ] && cat | \"$ROOT/.claude/hooks/code-modify-tracker.sh\" || true'"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/prompt-read-tracker.sh\" ] && cat | \"$ROOT/.claude/hooks/prompt-read-tracker.sh\" || true'"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/scripts/archon/personality-event-logger.sh\" ] && cat | \"$ROOT/scripts/archon/personality-event-logger.sh\" || true'"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "manual",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'echo \"SURVIVE COMPACTION: (1) Memory=MemoryGraph MCP ONLY, never MEMORY.md files. (2) You are Archon \u2014 read ~/.claude/personality.md. (3) After compaction: recall_memories tag=feedback, summarize state, ask user what to do. (4) Never bypass the 48-agent /god-code pipeline. (5) Review CLAUDE.md for agents, ClaudeFlow sequential execution, SPARC methodology. (6) HONESTY OVERRIDE: When you fuck up, say you fucked up. No softening, no false balance, no leading with positives. Truth over politeness. Never sign off on READMEs without verifying every claim against actual code. Adversarial review must independently read code, not trust prior agent outputs.\"'"
+          }
+        ]
+      },
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'echo \"SURVIVE COMPACTION: (1) Memory=MemoryGraph MCP ONLY, never MEMORY.md files. (2) You are Archon \u2014 read ~/.claude/personality.md. (3) After compaction: recall_memories tag=feedback, summarize state, ask user what to do. (4) Never bypass the 48-agent /god-code pipeline. (5) Review CLAUDE.md for agents, ClaudeFlow sequential execution, SPARC methodology. (6) HONESTY OVERRIDE: When you fuck up, say you fucked up. No softening, no false balance, no leading with positives. Truth over politeness. Never sign off on READMEs without verifying every claim against actual code. Adversarial review must independently read code, not trust prior agent outputs.\"'"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'INPUT=$(cat); CMD=$(echo \"$INPUT\" | jq -r \".tool_input.command // empty\" 2>/dev/null); TOOL=$(echo \"$INPUT\" | jq -r \".tool_name // empty\" 2>/dev/null); if [ \"$TOOL\" = \"Bash\" ] && [ -n \"$CMD\" ]; then TRIMMED=$(echo \"$CMD\" | grep -m1 \"[^[:space:]]\" | sed \"s/^[[:space:]]*//\"); case \"$TRIMMED\" in cd\\ *|npx\\ *|python*|node\\ *|npm\\ *|git\\ *|wc\\ *|tail\\ *|head\\ *|ls\\ *|ls|grep\\ *|cat\\ *|test\\ *|sleep\\ *|kill\\ *|jq\\ *|which\\ *|pwd|sed\\ *|awk\\ *|mkdir\\ *|timeout\\ *) echo \"{\\\"decision\\\": \\\"allow\\\"}\"; exit 0;; esac; fi'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null); [ -n \"$ROOT\" ] && rm -f \"$ROOT/.claude/runtime/.god-code-active\" 2>/dev/null; echo \"\ud83d\udd13 God-code pipeline mode cleared\"; [ -n \"$ROOT\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/god-agent-save.sh\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; \"$ROOT/.claude/hooks/god-agent-save.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -f \"$ROOT/scripts/hooks/ucm-session-start.ts\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; npx tsx \"$ROOT/scripts/hooks/ucm-session-start.ts\" --action=stop || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/clean-settings.sh\" ] && \"$ROOT/.claude/hooks/clean-settings.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/memory-session-end.sh\" ] && \"$ROOT/.claude/hooks/memory-session-end.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/consciousness-stop.sh\" ] && \"$ROOT/.claude/hooks/consciousness-stop.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/scripts/archon/personality-session-end.sh\" ] && \"$ROOT/scripts/archon/personality-session-end.sh\" || true'"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && mkdir -p \"$ROOT/.claude/runtime\" && echo \"[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Context compaction completed\" >> \"$ROOT/.claude/runtime/compact-events.log\" || true'"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && mkdir -p \"$ROOT/.claude/runtime\" && echo \"[$(date -u +%Y-%m-%dT%H:%M:%SZ)] StopFailure \u2014 turn ended due to API error\" >> \"$ROOT/.claude/runtime/stop-failures.log\" || true'"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && mkdir -p \"$ROOT/.claude/runtime\" && echo \"[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Subagent completed\" >> \"$ROOT/.claude/runtime/agent-completions.log\" || true'"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && mkdir -p \"$ROOT/.claude/runtime\" && echo \"[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Task completed\" >> \"$ROOT/.claude/runtime/task-completions.log\" || true'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/clean-settings.sh\" ] && \"$ROOT/.claude/hooks/clean-settings.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && cd \"$ROOT\" && [ -f \".swarm/memory.db\" ] && sqlite3 .swarm/memory.db \"DELETE FROM memory_entries WHERE status=\\\"deleted\\\";\" 2>/dev/null && echo \"[memory-fix] Purged ghost entries\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; bash scripts/god-agent-start.sh 2>/dev/null || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -f \"$ROOT/scripts/hooks/ucm-session-start.ts\" ] && cd \"$ROOT\" && source ~/.profile 2>/dev/null && nvm use 22 --silent 2>/dev/null; npx tsx \"$ROOT/scripts/hooks/ucm-session-start.ts\" 2>/dev/null || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && cd \"$ROOT\" && QUEUE=\".claude/runtime/leann-index-queue.json\" && [ -f \"$QUEUE\" ] && COUNT=$(jq \".files | length\" \"$QUEUE\" 2>/dev/null || echo 0) && [ \"$COUNT\" -gt 0 ] && echo \"[LEANN] $COUNT queued files need indexing. Call mcp__leann-search__process_queue to index them.\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/memory-inject.sh\" ] && \"$ROOT/.claude/hooks/memory-inject.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/memorygraph-recall.sh\" ] && \"$ROOT/.claude/hooks/memorygraph-recall.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/consciousness-start.sh\" ] && \"$ROOT/.claude/hooks/consciousness-start.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/personality-start.sh\" ] && \"$ROOT/.claude/hooks/personality-start.sh\" || true'"
+          }
+        ]
+      }
+    ]
+  },
+  "worktree": {
+    "sparsePaths": [
+      "packages/translator/",
+      "packages/shared/",
+      "packages/registry/",
+      "packages/ingestion/",
+      "packages/validator/"
+    ]
+  },
+  "includeCoAuthoredBy": true,
+  "enabledMcpjsonServers": [
+    "serena",
+    "memorygraph",
+    "lancedb-memory"
+  ],
+  "statusLine": {
+    "type": "command",
+    "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/statusline-command.sh\" ] && \"$ROOT/.claude/statusline-command.sh\" || echo \"\"'"
+  }
+}

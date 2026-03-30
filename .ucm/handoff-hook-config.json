@@ -1,0 +1,47 @@
+{
+  "hooks": [
+    "ucm-session-start",
+    "ucm-desc-injector",
+    "ucm-post-task-archive"
+  ],
+  "triggers": [
+    "SessionStart",
+    "PreToolUse:Task",
+    "PostToolUse:Task",
+    "Stop"
+  ],
+  "integration": "claude-code",
+  "configuration": {
+    "session_start": {
+      "trigger": "SessionStart",
+      "script": "scripts/hooks/ucm-session-start.ts",
+      "description": "Initializes UCM session, loads context and memory"
+    },
+    "session_stop": {
+      "trigger": "Stop",
+      "script": "scripts/hooks/ucm-session-start.ts --action=stop",
+      "description": "Closes UCM session, archives final state"
+    },
+    "pre_task": {
+      "trigger": "PreToolUse:Task",
+      "script": "scripts/hooks/ucm-desc-injector.ts",
+      "description": "Injects UCM memory context before task execution"
+    },
+    "post_task": {
+      "trigger": "PostToolUse:Task",
+      "script": "scripts/hooks/ucm-post-task-archive.ts",
+      "description": "Archives task results and updates UCM memory"
+    }
+  },
+  "preservation": "All existing hooks preserved, UCM hooks added to chain",
+  "hook_chain_order": {
+    "SessionStart": ["ucm-session-start"],
+    "PreToolUse:Task": ["pre-task.sh", "ucm-desc-injector"],
+    "PostToolUse:Task": ["post-task.sh", "ucm-post-task-archive"],
+    "Stop": ["session-end", "god-agent-save", "ucm-session-stop"]
+  },
+  "status": "configured",
+  "timestamp": "2025-12-25T00:00:00Z",
+  "next_agent": "Documentation Agent",
+  "handoff_note": "UCM hooks successfully configured in Claude Code settings.json. All triggers use correct hook names (SessionStart not Start). Existing hooks preserved in chain."
+}

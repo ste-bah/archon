@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.archon.learn</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>/Users/stevenbahia/.archon/scripts/archon-runner.sh</string>
+        <string>learn</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>14400</integer>
+    <key>WorkingDirectory</key>
+    <string>/Users/stevenbahia</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/Users/stevenbahia</string>
+        <key>ARCHON_PROJECT_ROOT</key>
+        <string>/Volumes/Externalwork/projects/claudeflow-testing</string>
+        <key>PATH</key>
+        <string>/Users/stevenbahia/.local/bin:/Users/stevenbahia/.nvm/versions/node/v22.21.1/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/stevenbahia/.archon/logs/launchd-learn-stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stevenbahia/.archon/logs/launchd-learn-stderr.log</string>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>Nice</key>
+    <integer>15</integer>
+</dict>
+</plist>

@@ -1,0 +1,21 @@
+# God Agent Embedding API Dependencies (1536D - Dual Backend + Dual VectorDB)
+# Embedding: LOCAL (gte-Qwen2-1.5B-instruct) or OPENAI (text-embedding-ada-002)
+# Vector DB: ChromaDB (local) or Zilliz Cloud (managed Milvus)
+
+# Core API
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.0.0
+
+# Vector DB backends
+chromadb>=0.4.0
+pymilvus>=2.4.0
+
+# Local embedding backend (default)
+sentence-transformers>=2.2.2
+transformers>=5.0.0rc1
+torch>=2.0.0
+
+# OpenAI embedding backend (optional)
+openai>=1.0.0
+tiktoken>=0.5.0

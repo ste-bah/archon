@@ -1,0 +1,522 @@
+/**
+ * APA 7th Edition CSS Stylesheet for Pandoc HTML-to-PDF
+ *
+ * This stylesheet provides APA 7th Edition compliant styling for
+ * HTML output when LaTeX is not available.
+ *
+ * Reference: American Psychological Association. (2020). Publication manual
+ * of the American Psychological Association (7th ed.).
+ *
+ * Usage: pandoc input.md -o output.pdf --pdf-engine=wkhtmltopdf --css=apa7.css
+ */
+
+/* =============================================================================
+   PAGE SETTINGS
+   ============================================================================= */
+
+@page {
+  size: letter;
+  margin: 1in;
+
+  @top-left {
+    content: string(running-head);
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    text-transform: uppercase;
+  }
+
+  @top-right {
+    content: counter(page);
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+  }
+}
+
+@page :first {
+  @top-left {
+    content: string(running-head);
+  }
+}
+
+/* =============================================================================
+   BASE TYPOGRAPHY - APA 7th Edition Section 2.19
+   ============================================================================= */
+
+html {
+  font-size: 12pt;
+}
+
+body {
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-size: 12pt;
+  line-height: 2; /* Double-spaced per APA 7th Edition Section 2.21 */
+  color: #000;
+  background: #fff;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  orphans: 2;
+  widows: 2;
+}
+
+/* =============================================================================
+   PARAGRAPH FORMATTING - APA 7th Edition Section 2.24
+   ============================================================================= */
+
+p {
+  margin: 0;
+  padding: 0;
+  text-indent: 0.5in; /* First line indent per APA 7th Edition */
+}
+
+/* No indent after headings (first paragraph) */
+h1 + p,
+h2 + p,
+h3 + p,
+h4 + p,
+h5 + p,
+h6 + p {
+  text-indent: 0.5in; /* APA 7 still indents first paragraph after heading */
+}
+
+/* =============================================================================
+   HEADING STYLES - APA 7th Edition Section 2.27
+   ============================================================================= */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+  line-height: 2;
+  page-break-after: avoid;
+}
+
+/* Level 1: Centered, Bold, Title Case */
+h1 {
+  text-align: center;
+  font-weight: bold;
+  font-style: normal;
+}
+
+/* Level 2: Flush Left, Bold, Title Case */
+h2 {
+  text-align: left;
+  font-weight: bold;
+  font-style: normal;
+}
+
+/* Level 3: Flush Left, Bold Italic, Title Case */
+h3 {
+  text-align: left;
+  font-weight: bold;
+  font-style: italic;
+}
+
+/* Level 4: Indented, Bold, Title Case, Period. (Inline) */
+h4 {
+  text-align: left;
+  text-indent: 0.5in;
+  font-weight: bold;
+  font-style: normal;
+  display: inline;
+}
+
+h4::after {
+  content: ". ";
+}
+
+/* Level 5: Indented, Bold Italic, Title Case, Period. (Inline) */
+h5 {
+  text-align: left;
+  text-indent: 0.5in;
+  font-weight: bold;
+  font-style: italic;
+  display: inline;
+}
+
+h5::after {
+  content: ". ";
+}
+
+/* Level 6: Same as Level 5 for fallback */
+h6 {
+  text-align: left;
+  text-indent: 0.5in;
+  font-weight: bold;
+  font-style: italic;
+  display: inline;
+}
+
+h6::after {
+  content: ". ";
+}
+
+/* =============================================================================
+   TITLE PAGE - APA 7th Edition Section 2.3-2.6
+   ============================================================================= */
+
+.title-page {
+  page-break-after: always;
+  text-align: center;
+  padding-top: 2in;
+}
+
+.title {
+  font-weight: bold;
+  font-size: 12pt;
+  text-align: center;
+  margin-bottom: 1in;
+}
+
+.author {
+  text-align: center;
+  margin-bottom: 0.5em;
+}
+
+.affiliation {
+  text-align: center;
+  margin-bottom: 0.5em;
+}
+
+.author-note {
+  position: absolute;
+  bottom: 1in;
+  left: 1in;
+  right: 1in;
+  text-align: left;
+}
+
+.author-note-title {
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Running head metadata */
+.running-head {
+  string-set: running-head content();
+  display: none;
+}
+
+/* =============================================================================
+   ABSTRACT - APA 7th Edition Section 2.9
+   ============================================================================= */
+
+.abstract {
+  page-break-before: always;
+}
+
+.abstract h1,
+.abstract-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 12pt;
+}
+
+.abstract p,
+.abstract-content {
+  text-indent: 0; /* Abstract has no paragraph indentation */
+}
+
+.keywords {
+  text-indent: 0.5in;
+  margin-top: 1em;
+}
+
+.keywords-label {
+  font-style: italic;
+}
+
+/* =============================================================================
+   REFERENCES - APA 7th Edition Section 2.12, 9.43
+   ============================================================================= */
+
+.references,
+#refs {
+  page-break-before: always;
+}
+
+.references h1,
+.references-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 12pt;
+}
+
+/* Hanging indent for references - 0.5 inch per APA 7th Edition Section 9.43 */
+.references p,
+.references .csl-entry,
+#refs p,
+#refs .csl-entry,
+.hanging-indent p,
+.hanging-indent .csl-entry {
+  text-indent: -0.5in;
+  padding-left: 0.5in;
+  margin: 0;
+}
+
+/* CSL bibliography formatting */
+.csl-bib-body {
+  line-height: 2;
+}
+
+.csl-entry {
+  text-indent: -0.5in;
+  padding-left: 0.5in;
+  margin-bottom: 0;
+}
+
+/* =============================================================================
+   APPENDICES - APA 7th Edition Section 2.14
+   ============================================================================= */
+
+.appendix {
+  page-break-before: always;
+}
+
+.appendix-label {
+  text-align: center;
+  font-weight: bold;
+  font-size: 12pt;
+}
+
+.appendix-title {
+  text-align: center;
+  font-weight: bold;
+  font-style: italic;
+  font-size: 12pt;
+}
+
+/* =============================================================================
+   TABLES - APA 7th Edition Section 7.1-7.21
+   ============================================================================= */
+
+table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+  font-size: 12pt;
+  line-height: 1.5; /* Tables can be single-spaced */
+}
+
+caption {
+  text-align: left;
+  margin-bottom: 0.5em;
+}
+
+.table-number {
+  font-weight: bold;
+  display: block;
+}
+
+.table-title {
+  font-style: italic;
+  display: block;
+}
+
+th, td {
+  padding: 0.25em 0.5em;
+  text-align: left;
+  vertical-align: top;
+}
+
+thead tr {
+  border-top: 2px solid #000;
+  border-bottom: 1px solid #000;
+}
+
+tbody tr:last-child {
+  border-bottom: 2px solid #000;
+}
+
+.table-note {
+  font-size: 12pt;
+  margin-top: 0.5em;
+}
+
+.table-note-label {
+  font-style: italic;
+}
+
+/* =============================================================================
+   FIGURES - APA 7th Edition Section 7.22-7.36
+   ============================================================================= */
+
+figure {
+  margin: 1em 0;
+  page-break-inside: avoid;
+}
+
+figcaption {
+  margin-top: 0.5em;
+}
+
+.figure-number {
+  font-weight: bold;
+  display: block;
+}
+
+.figure-title {
+  font-style: italic;
+  display: block;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* =============================================================================
+   LISTS
+   ============================================================================= */
+
+ul, ol {
+  margin: 0;
+  padding-left: 0.5in;
+}
+
+li {
+  margin: 0;
+  padding: 0;
+}
+
+/* Seriated lists per APA guidelines */
+ol.seriated {
+  list-style-type: lower-alpha;
+}
+
+ol.seriated li::marker {
+  content: "(" counter(list-item, lower-alpha) ") ";
+}
+
+/* =============================================================================
+   BLOCKQUOTES - APA 7th Edition Section 8.27-8.33
+   ============================================================================= */
+
+blockquote {
+  margin: 0;
+  margin-left: 0.5in;
+  text-indent: 0;
+}
+
+/* Block quotes of 40+ words */
+blockquote.long-quote {
+  margin-left: 0.5in;
+  margin-right: 0;
+}
+
+blockquote p {
+  text-indent: 0;
+}
+
+blockquote p + p {
+  text-indent: 0.5in;
+}
+
+/* =============================================================================
+   LINKS AND CITATIONS
+   ============================================================================= */
+
+a {
+  color: #000;
+  text-decoration: none;
+}
+
+a[href^="http"]::after {
+  content: "";
+}
+
+/* In-text citations */
+.citation {
+  /* No special styling needed */
+}
+
+/* =============================================================================
+   CODE BLOCKS (for technical papers)
+   ============================================================================= */
+
+code {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11pt;
+}
+
+pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11pt;
+  margin: 1em 0;
+  padding: 0.5em;
+  background: #f5f5f5;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+/* =============================================================================
+   PAGE BREAKS
+   ============================================================================= */
+
+.page-break,
+.newpage {
+  page-break-before: always;
+}
+
+/* Avoid breaks inside important elements */
+h1, h2, h3, h4, h5, h6,
+table, figure, blockquote {
+  page-break-inside: avoid;
+}
+
+/* Keep headings with their content */
+h1, h2, h3, h4, h5, h6 {
+  page-break-after: avoid;
+}
+
+/* =============================================================================
+   PRINT STYLES
+   ============================================================================= */
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  a {
+    color: #000;
+    text-decoration: none;
+  }
+
+  .no-print {
+    display: none;
+  }
+}
+
+/* =============================================================================
+   PANDOC-SPECIFIC CLASSES
+   ============================================================================= */
+
+/* Unnumbered sections (like Abstract, References) */
+.unnumbered {
+  /* No special styling needed, but prevents numbering */
+}
+
+/* Pandoc div containers */
+div.abstract {
+  page-break-before: always;
+}
+
+div.abstract p:first-of-type {
+  text-indent: 0;
+}
+
+/* Hanging indent class for references */
+div.hanging-indent p,
+div.hanging-indent .csl-entry {
+  text-indent: -0.5in;
+  padding-left: 0.5in;
+}
+
+/* Sourcepos class from Pandoc */
+[data-sourcepos] {
+  /* No special styling */
+}

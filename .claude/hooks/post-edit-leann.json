@@ -1,0 +1,54 @@
+{
+  "name": "LEANN Auto-Index on File Creation/Modification",
+  "description": "Automatically queues newly created/modified files for LEANN semantic search indexing. This ensures the context-gatherer agent can find code from prior pipeline runs.",
+  "version": "1.0.0",
+  "event": "PostToolUse",
+  "matcher": {
+    "toolName": ["Write", "Edit", "MultiEdit"]
+  },
+  "hooks": [
+    {
+      "type": "command",
+      "description": "Queue file for LEANN indexing using leann-index-file.sh",
+      "command": ".claude/hooks/leann-index-file.sh",
+      "inputTransform": "Extract file_path from tool_input",
+      "timeout": 5000
+    }
+  ],
+  "queueFile": ".claude/runtime/leann-index-queue.json",
+  "supportedExtensions": [
+    ".ts", ".tsx", ".js", ".jsx", ".py", ".rs", ".go", ".java", ".c", ".cpp", ".cs", ".rb", ".php", ".sql"
+  ],
+  "excludedPaths": [
+    "node_modules", "/dist/", "/.git/"
+  ],
+  "batchProcessors": [
+    {
+      "name": "leann-batch-index.sh",
+      "description": "Shell-based batch processor (uses curl to embedder API)",
+      "location": ".claude/hooks/leann-batch-index.sh"
+    },
+    {
+      "name": "leann-process-queue.ts",
+      "description": "TypeScript processor with semantic chunking using parseCodeIntoChunks from MCP",
+      "location": "scripts/hooks/leann-process-queue.ts",
+      "runCommand": "npx tsx scripts/hooks/leann-process-queue.ts",
+      "features": [
+        "Semantic code chunking by functions/classes/methods",
+        "Rate limiting with batch processing",
+        "Health checks for embedder service",
+        "Content hashing for deduplication"
+      ]
+    }
+  ],
+  "triggeredBy": "settings.json PostToolUse Write|Edit|MultiEdit hook",
+  "note": "This configuration is for documentation. The actual hook is configured in .claude/settings.json at PostToolUse > Write|Edit|MultiEdit matcher.",
+  "relatedMemoryKeys": [
+    "leann/indexed-files",
+    "coding/implementation/*"
+  ],
+  "metadata": {
+    "createdAt": "2026-02-01",
+    "purpose": "Enable semantic search across pipeline-created code for future context-gatherer agents"
+  }
+}

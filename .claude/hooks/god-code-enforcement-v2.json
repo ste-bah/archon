@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "2.0.0",
+  "description": "God-Code Pipeline Enforcement Hook Configuration - Memory-Based",
+  "createdAt": "2026-02-03",
+  "enforcement": {
+    "memoryKey": "enforcement/pipeline/active",
+    "memoryNamespace": "default",
+    "minAgentsBeforeWrite": 7,
+    "totalPipelineAgents": 47,
+    "phases": {
+      "phase1_understanding": {
+        "agents": "1-7",
+        "count": 7,
+        "writeAllowed": false,
+        "description": "Task analysis, requirement extraction, prioritization"
+      },
+      "phase2_exploration": {
+        "agents": "8-12",
+        "count": 5,
+        "writeAllowed": false,
+        "description": "Pattern exploration, alternative analysis, research"
+      },
+      "phase3_architecture": {
+        "agents": "13-18",
+        "count": 6,
+        "writeAllowed": false,
+        "description": "System design, API definition, schema planning"
+      },
+      "phase4_implementation": {
+        "agents": "19-31",
+        "count": 13,
+        "writeAllowed": true,
+        "description": "Code generation, feature implementation, integration"
+      },
+      "phase5_testing": {
+        "agents": "32-39",
+        "count": 8,
+        "writeAllowed": true,
+        "description": "Test generation, coverage analysis, verification"
+      },
+      "phase6_optimization": {
+        "agents": "40-45",
+        "count": 6,
+        "writeAllowed": true,
+        "description": "Performance optimization, refactoring, cleanup"
+      },
+      "phase7_delivery": {
+        "agents": "46-47",
+        "count": 2,
+        "writeAllowed": true,
+        "description": "Sign-off, documentation, recovery planning"
+      }
+    }
+  },
+  "hooks": [
+    {
+      "name": "god-code-activate",
+      "description": "Activates pipeline enforcement when /god-code skill is invoked",
+      "event": "PreToolUse",
+      "matcher": {
+        "tool": "Skill",
+        "args": {
+          "skill": "god-code"
+        }
+      },
+      "command": "source \"$PROJECT_ROOT/.claude/hooks/god-code-enforcement-v2.sh\" && activate_pipeline",
+      "timeout": 15000,
+      "onFailure": "warn"
+    },
+    {
+      "name": "task-tracker",
+      "description": "Tracks Task() invocations and increments agent count",
+      "event": "PostToolUse",
+      "matcher": {
+        "tool": "Task"
+      },
+      "command": "source \"$PROJECT_ROOT/.claude/hooks/god-code-enforcement-v2.sh\" && increment_agent_count \"$TASK_DESCRIPTION\"",
+      "timeout": 10000,
+      "onFailure": "warn"
+    },
+    {
+      "name": "write-gate",
+      "description": "Blocks Write/Edit/MultiEdit during active pipeline (before Phase 4)",
+      "event": "PreToolUse",
+      "matcher": {
+        "tool": ["Write", "Edit", "MultiEdit"]
+      },
+      "command": "source \"$PROJECT_ROOT/.claude/hooks/god-code-enforcement-v2.sh\" && check_write_permission \"$TOOL_NAME\" \"$FILE_PATH\"",
+      "timeout": 10000,
+      "onFailure": "block"
+    }
+  ],
+  "integrationNotes": {
+    "settingsJsonIntegration": {
+      "description": "Add these hooks to .claude/settings.json in the 'hooks' array",
+      "example": {
+        "PreToolUse": [
+          {
+            "matcher": "Skill god-code",
+            "command": "source .claude/hooks/god-code-enforcement-v2.sh && activate_pipeline"
+          }
+        ],
+        "PostToolUse": [
+          {
+            "matcher": "Task",
+            "command": "source .claude/hooks/god-code-enforcement-v2.sh && increment_agent_count"
+          }
+        ]
+      }
+    },
+    "memoryPersistence": {
+      "description": "State persists in ClaudeFlow memory at enforcement/pipeline/active",
+      "surviveCompaction": true,
+      "backupKey": "enforcement/pipeline/backup-{pipelineId}"
+    },
+    "manualControl": {
+      "activate": "bash .claude/hooks/god-code-enforcement-v2.sh activate",
+      "status": "bash .claude/hooks/god-code-enforcement-v2.sh status",
+      "deactivate": "bash .claude/hooks/god-code-enforcement-v2.sh deactivate",
+      "forceAllow": "npx claude-flow@alpha memory store -k \"enforcement/pipeline/active\" --value '{\"active\":false}'"
+    }
+  }
+}

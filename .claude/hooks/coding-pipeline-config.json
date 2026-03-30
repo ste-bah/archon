@@ -1,0 +1,37 @@
+{
+  "hooks": [
+    {
+      "name": "coding-pipeline-pre",
+      "event": "PreToolUse",
+      "matcher": {
+        "tool": "Skill",
+        "args": {
+          "skill": "god-code"
+        }
+      },
+      "command": ".claude/hooks/coding-pipeline-pre.sh",
+      "timeout": 5000
+    },
+    {
+      "name": "coding-pipeline-post",
+      "event": "PostToolUse",
+      "matcher": {
+        "tool": "Skill",
+        "args": {
+          "skill": "god-code"
+        }
+      },
+      "command": ".claude/hooks/coding-pipeline-post.sh",
+      "timeout": 5000
+    }
+  ],
+  "typescript": {
+    "handler": "src/god-agent/hooks/coding-pipeline-hook.ts",
+    "exports": ["preCodeHook", "postCodeHook", "updatePhaseStatus", "createCheckpoint"]
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Coding pipeline hooks for /god-code command integration",
+    "specReference": "TASK-HOOK-001"
+  }
+}

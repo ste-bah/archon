@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>God Agent Observability Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>God Agent Dashboard</h1>
+        </div>
+        <nav class="header-nav">
+            <button class="nav-tab active" data-tab="overview">Overview</button>
+            <button class="nav-tab" data-tab="pipeline">Pipeline</button>
+            <button class="nav-tab" data-tab="memory">Memory</button>
+            <button class="nav-tab" data-tab="system">System</button>
+        </nav>
+        <div class="connection-status">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Connecting...</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- ═══════════ Tab 1: Overview ═══════════ -->
+        <div id="tab-overview" class="tab-panel" style="display: block;">
+            <div class="health-strip">
+                <span>Status: <span id="ov-daemon-status" class="status-healthy">Healthy</span></span>
+                <span>Uptime: <span id="ov-uptime">0s</span></span>
+                <span>Memory: <span id="ov-memory">0 MB</span></span>
+                <span>SSE: <span id="ov-sse">Connecting</span></span>
+            </div>
+
+            <div class="overview-grid">
+                <div class="overview-left">
+                    <section class="panel">
+                        <h2>Active Pipeline</h2>
+                        <div class="panel-body" id="ov-pipeline-progress">
+                            <div class="no-data">No active pipeline</div>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <h2>Active Agents <span class="count-badge" id="ov-agent-count">0</span></h2>
+                        <div class="panel-body">
+                            <ul id="ov-agent-list" class="agent-list"></ul>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="metrics-row">
+                            <div class="metric-card">
+                                <span class="metric-label">Tokens</span>
+                                <span class="metric-value" id="ov-tokens">0</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Trajectories</span>
+                                <span class="metric-value" id="ov-trajectories">0</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Patterns</span>
+                                <span class="metric-value" id="ov-patterns">0</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Episodes</span>
+                                <span class="metric-value" id="ov-episodes">0</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="panel charts-panel">
+                        <div class="chart-container">
+                            <canvas id="tokenChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="qualityChart"></canvas>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="overview-right">
+                    <section class="panel activity-panel">
+                        <h2>Activity Stream</h2>
+                        <div class="filters">
+                            <select id="componentFilter" class="filter-select">
+                                <option value="">All Components</option>
+                                <option value="agent">Agents</option>
+                                <option value="pipeline">Pipelines</option>
+                                <option value="routing">Routing</option>
+                                <option value="learning">Learning</option>
+                                <option value="ucm">UCM</option>
+                                <option value="idesc">IDESC</option>
+                                <option value="episode">Episode</option>
+                                <option value="hyperedge">Hyperedge</option>
+                                <option value="embedding">Embedding</option>
+                                <option value="daemon">Daemon</option>
+                                <option value="token_budget">Token Budget</option>
+                                <option value="search">Search</option>
+                                <option value="memory">Memory</option>
+                            </select>
+                            <select id="statusFilter" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="success">Success</option>
+                                <option value="error">Error</option>
+                                <option value="running">Running</option>
+                                <option value="info">Info</option>
+                            </select>
+                        </div>
+                        <div class="panel-body activity-scroll">
+                            <ul id="ov-activity-list" class="activity-list"></ul>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════ Tab 2: Pipeline ═══════════ -->
+        <div id="tab-pipeline" class="tab-panel" style="display: none;">
+            <div class="pipeline-controls">
+                <select id="pipeline-type-filter" class="filter-select">
+                    <option value="">All Pipelines</option>
+                    <option value="god-code">God-Code (48 agents)</option>
+                    <option value="god-research">God-Research (PhD)</option>
+                </select>
+            </div>
+
+            <section class="panel">
+                <h2>Pipeline Progress</h2>
+                <div class="panel-body">
+                    <div id="pl-phase-stepper" class="phase-stepper"></div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2>Agent Execution</h2>
+                <div class="panel-body" id="pl-agent-list"></div>
+            </section>
+
+            <section class="panel">
+                <h2>Recent Pipelines</h2>
+                <div class="panel-body">
+                    <table id="pl-history" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Pipeline</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Agents</th>
+                                <th>Duration</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- ═══════════ Tab 3: Memory & Learning ═══════════ -->
+        <div id="tab-memory" class="tab-panel" style="display: none;">
+            <div class="memory-grid">
+                <div class="memory-left">
+                    <section class="panel">
+                        <h2>Learning Metrics (SoNA)</h2>
+                        <div class="panel-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">Trajectories</span>
+                                    <span class="metric-value" id="mem-traj-total">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Active</span>
+                                    <span class="metric-value" id="mem-traj-active">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Completed</span>
+                                    <span class="metric-value" id="mem-traj-completed">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Patterns</span>
+                                    <span class="metric-value" id="mem-pattern-count">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Avg Weight</span>
+                                    <span class="metric-value" id="mem-pattern-avg-weight">0.00</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Success/Fail</span>
+                                    <span class="metric-value" id="mem-pattern-sf">0/0</span>
+                                </div>
+                            </div>
+                            <div class="chart-container chart-sm">
+                                <canvas id="patternChart"></canvas>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <h2>UCM &amp; IDESC v2</h2>
+                        <div class="panel-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">Episodes Stored</span>
+                                    <span class="metric-value" id="mem-ucm-episodes">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Context Size</span>
+                                    <span class="metric-value" id="mem-ucm-context">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Outcomes</span>
+                                    <span class="metric-value" id="mem-idesc-outcomes">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Injection Rate</span>
+                                    <span class="metric-value" id="mem-idesc-injection">0%</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Neg. Warnings</span>
+                                    <span class="metric-value" id="mem-idesc-warnings">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Threshold Adj.</span>
+                                    <span class="metric-value" id="mem-idesc-threshold">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <h2>Episode &amp; Hyperedge</h2>
+                        <div class="panel-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">Episodes Linked</span>
+                                    <span class="metric-value" id="mem-ep-linked">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Time Index</span>
+                                    <span class="metric-value" id="mem-ep-time-index">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Q&amp;A Hyperedges</span>
+                                    <span class="metric-value" id="mem-hyp-qa">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Causal Chains</span>
+                                    <span class="metric-value" id="mem-hyp-causal">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Loops Detected</span>
+                                    <span class="metric-value" id="mem-hyp-loops">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Communities</span>
+                                    <span class="metric-value" id="mem-hyp-communities">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <h2>LEANN Search Index <span id="leann-stale" style="font-size:0.7em;color:#f59e0b;display:none;">(stale)</span></h2>
+                        <div class="panel-body">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">Index Size</span>
+                                    <span class="metric-value" id="leann-size">0 B</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Indexed Chunks</span>
+                                    <span class="metric-value" id="leann-indexed">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Unique Files</span>
+                                    <span class="metric-value" id="leann-unique-files">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Memory Usage</span>
+                                    <span class="metric-value" id="leann-memory">N/A</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Files on Disk</span>
+                                    <span class="metric-value" id="leann-files">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Stores</span>
+                                    <span class="metric-value" id="leann-stores">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="memory-right">
+                    <section class="panel memory-inspector-panel">
+                        <h2>Memory Inspector</h2>
+                        <div class="panel-body">
+                            <div class="mem-tabs">
+                                <button class="mem-tab-button active" data-tab="interaction-store">InteractionStore</button>
+                                <button class="mem-tab-button" data-tab="reasoning-bank">ReasoningBank</button>
+                                <button class="mem-tab-button" data-tab="episode-store">EpisodeStore</button>
+                                <button class="mem-tab-button" data-tab="ucm-context">UCM Context</button>
+                                <button class="mem-tab-button" data-tab="hyperedge-store">Hyperedge</button>
+                            </div>
+
+                            <div class="mem-tab-content active" id="mem-interaction-store">
+                                <div class="memory-search">
+                                    <input type="text" id="mem-domain-search" placeholder="Search by domain..." class="search-input">
+                                </div>
+                                <ul id="mem-interaction-list" class="memory-list"></ul>
+                            </div>
+
+                            <div class="mem-tab-content" id="mem-reasoning-bank">
+                                <div id="mem-reasoning-stats"></div>
+                                <ul id="mem-reasoning-list" class="memory-list"></ul>
+                            </div>
+
+                            <div class="mem-tab-content" id="mem-episode-store">
+                                <div id="mem-episode-stats"></div>
+                                <ul id="mem-episode-list" class="memory-list"></ul>
+                            </div>
+
+                            <div class="mem-tab-content" id="mem-ucm-context">
+                                <div id="mem-ucm-stats"></div>
+                                <ul id="mem-ucm-list" class="memory-list"></ul>
+                            </div>
+
+                            <div class="mem-tab-content" id="mem-hyperedge-store">
+                                <div id="mem-hyperedge-stats"></div>
+                                <ul id="mem-hyperedge-list" class="memory-list"></ul>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════ Tab 4: System ═══════════ -->
+        <div id="tab-system" class="tab-panel" style="display: none;">
+            <div class="system-grid">
+                <section class="panel">
+                    <h2>Daemon Health</h2>
+                    <div class="panel-body">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <span class="metric-label">Status</span>
+                                <span class="metric-value status-healthy" id="sys-daemon-status">Healthy</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Uptime</span>
+                                <span class="metric-value" id="sys-daemon-uptime">0s</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Events Processed</span>
+                                <span class="metric-value" id="sys-daemon-events">0</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Memory Usage</span>
+                                <span class="metric-value" id="sys-daemon-memory">0 MB</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <h2>Token Usage</h2>
+                    <div class="panel-body">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <span class="metric-label">Total Tokens</span>
+                                <span class="metric-value" id="sys-token-total">0</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Input Tokens</span>
+                                <span class="metric-value" id="sys-token-input">0</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Output Tokens</span>
+                                <span class="metric-value" id="sys-token-output">0</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Requests</span>
+                                <span class="metric-value" id="sys-token-requests">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel full-width">
+                    <h2>Databases</h2>
+                    <div class="panel-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Database</th>
+                                    <th>Size</th>
+                                    <th>Path</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sys-databases"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <h2>Agent Registry</h2>
+                    <div class="panel-body">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <span class="metric-label">Total Agents</span>
+                                <span class="metric-value" id="sys-reg-total">280</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Categories</span>
+                                <span class="metric-value" id="sys-reg-categories">39</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Selections Today</span>
+                                <span class="metric-value" id="sys-reg-selections">0</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Embedding Dim</span>
+                                <span class="metric-value" id="sys-reg-embedding">1536</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel full-width">
+                    <h2>Routing Decisions</h2>
+                    <div class="panel-body">
+                        <ul id="sys-routing-list" class="routing-list"></ul>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

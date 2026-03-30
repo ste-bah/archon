@@ -1,0 +1,383 @@
+%% APA 7th Edition LaTeX Template for Pandoc
+%%
+%% This template produces APA 7th Edition compliant PDF output.
+%% Reference: American Psychological Association. (2020). Publication manual
+%% of the American Psychological Association (7th ed.).
+%%
+%% Usage: pandoc input.md -o output.pdf --template=apa7.tex --pdf-engine=xelatex
+%%
+
+\documentclass[$if(fontsize)$$fontsize$$else$11pt$endif$,$if(papersize)$$papersize$$else$letterpaper$endif$]{article}
+
+%% =============================================================================
+%% PACKAGES
+%% =============================================================================
+
+%% Page geometry - 1 inch margins per APA 7th Edition Section 2.22
+\usepackage[$if(geometry)$$geometry$$else$margin=0.75in$endif$]{geometry}
+
+%% Font packages (XeLaTeX for system font access)
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\setmainfont{Times New Roman}[
+  BoldFont = Times New Roman Bold,
+  ItalicFont = Times New Roman Italic,
+  BoldItalicFont = Times New Roman Bold Italic
+]
+
+%% Line spacing - double-spaced per APA 7th Edition Section 2.21
+\usepackage{setspace}
+$if(linestretch)$
+\setstretch{$linestretch$}
+$else$
+\setstretch{1.5}
+$endif$
+
+%% Paragraph indentation - 0.5 inch per APA 7th Edition Section 2.24
+\usepackage{indentfirst}
+\setlength{\parindent}{0.5in}
+\setlength{\parskip}{0pt}
+
+%% Headers and footers for running head
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\setlength{\headheight}{14.5pt}
+
+%% Title formatting
+\usepackage{titlesec}
+
+%% Table of Contents formatting
+\usepackage{tocloft}
+%% Use dots between ToC entry and page number
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsubsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsubsubsecleader}{\cftdotfill{\cftdotsep}}
+%% Remove bold from ToC section entries
+\renewcommand{\cftsecfont}{\normalfont}
+\renewcommand{\cftsecpagefont}{\normalfont}
+%% Indentation for subsections
+\setlength{\cftsubsecindent}{0.5in}
+\setlength{\cftsubsubsecindent}{1.0in}
+%% Spacing between ToC entries
+\setlength{\cftbeforesecskip}{6pt}
+\setlength{\cftbeforesubsecskip}{2pt}
+
+%% For hanging indent in references
+\usepackage{hanging}
+
+%% URLs and hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue,
+  bookmarksnumbered=true,
+  bookmarksopen=true,
+  pdfauthor={$for(author)$$author.name$$sep$, $endfor$},
+  pdftitle={$title$}
+}
+%% Ensure hyperref bookmarks work with unnumbered sections
+\usepackage{bookmark}
+
+%% Table and figure formatting
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{calc}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{etoolbox}
+
+%% Tables: single-spaced, compact font, tight padding
+\AtBeginEnvironment{longtable}{%
+  \singlespacing%
+  \scriptsize%
+  \setlength{\tabcolsep}{2pt}%
+  \setlength{\LTpre}{6pt}%
+  \setlength{\LTpost}{6pt}%
+}
+\AtBeginEnvironment{tabular}{%
+  \singlespacing%
+  \scriptsize%
+  \setlength{\tabcolsep}{2pt}%
+}
+
+%% Allow line breaks and hyphenation in table paragraph columns
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+%% Fix for Pandoc table captions with "none" type
+\DeclareCaptionLabelFormat{nolabel}{}
+\captionsetup[table]{labelformat=nolabel}
+
+%% Define counter for "none" caption type (Pandoc compatibility)
+\newcounter{none}
+
+%% For conditional content
+\usepackage{ifthen}
+
+%% Code highlighting (Pandoc)
+\usepackage{fancyvrb}
+\usepackage{xcolor}
+\usepackage{framed}
+
+%% Define Shaded environment for code blocks
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+
+%% CSLReferences environment for Pandoc --citeproc output
+%% APA 7th: hanging indent 0.5in per Section 2.12
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{0.5in}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{0pt}
+\newlength{\cslentryspacing}
+\setlength{\cslentryspacing}{0em}
+\newenvironment{CSLReferences}[2]%
+  {\begin{list}{}{%
+    \setlength{\itemindent}{0pt}%
+    \setlength{\leftmargin}{\cslhangindent}%
+    \setlength{\parsep}{0pt}%
+    \setlength{\listparindent}{\parindent}%
+    \setlength{\itemsep}{\parskip}%
+    \ifodd #1
+      \setlength{\leftmargin}{\cslhangindent}%
+      \setlength{\itemindent}{-\cslhangindent}%
+    \fi}}%
+  {\end{list}}
+
+%% Define Highlighting environment for syntax highlighting
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+
+%% Define highlighting commands
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+
+%% =============================================================================
+%% DOCUMENT SETTINGS
+%% =============================================================================
+
+%% Page style for running head
+\pagestyle{fancy}
+\fancyhf{}
+
+%% Running head: ALL CAPS flush left, page number flush right
+%% Per APA 7th Edition Section 2.18
+$if(running-head)$
+\fancyhead[L]{\footnotesize\MakeUppercase{$running-head$}}
+$else$
+\fancyhead[L]{\footnotesize\MakeUppercase{$title$}}
+$endif$
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+%% Plain style for first page of sections (still has running head in APA 7)
+\fancypagestyle{plain}{
+  \fancyhf{}
+  $if(running-head)$
+  \fancyhead[L]{\footnotesize\MakeUppercase{$running-head$}}
+  $else$
+  \fancyhead[L]{\footnotesize\MakeUppercase{$title$}}
+  $endif$
+  \fancyhead[R]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+%% =============================================================================
+%% HEADING STYLES - APA 7th Edition Section 2.27
+%% =============================================================================
+
+%% Level 1: Centered, Bold, Title Case
+%% Spacing: 1 blank double-spaced line above (12pt), 0pt below
+\titleformat{\section}
+  {\normalfont\normalsize\bfseries\centering}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\section}{0pt}{\baselineskip}{0pt}
+
+%% Level 2: Flush Left, Bold, Title Case
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries\raggedright}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\subsection}{0pt}{\baselineskip}{0pt}
+
+%% Level 3: Flush Left, Bold Italic, Title Case
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\itshape\raggedright}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\subsubsection}{0pt}{\baselineskip}{0pt}
+
+%% Level 4: Indented, Bold, Title Case, Ending with Period.
+\titleformat{\paragraph}[runin]
+  {\normalfont\normalsize\bfseries}
+  {}
+  {0pt}
+  {\hspace{\parindent}}
+  [.]
+\titlespacing*{\paragraph}{0pt}{\baselineskip}{\wordsep}
+
+%% Level 5: Indented, Bold Italic, Title Case, Ending with Period.
+\titleformat{\subparagraph}[runin]
+  {\normalfont\normalsize\bfseries\itshape}
+  {}
+  {0pt}
+  {\hspace{\parindent}}
+  [.]
+\titlespacing*{\subparagraph}{0pt}{\baselineskip}{\wordsep}
+
+%% =============================================================================
+%% CUSTOM COMMANDS
+%% =============================================================================
+
+%% Environment for hanging indent (references)
+\newenvironment{hangingindent}{%
+  \begin{hangparas}{0.5in}{1}%
+}{%
+  \end{hangparas}%
+}
+
+%% Pandoc tight list command (removes extra space in lists)
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+%% Abstract environment
+\renewenvironment{abstract}{%
+  \newpage
+  \section*{Abstract}
+  \setlength{\parindent}{0pt}%
+}{%
+  \setlength{\parindent}{0.5in}%
+}
+
+%% Keywords command
+\newcommand{\keywords}[1]{%
+  \vspace{1em}
+  \noindent\textit{Keywords}: #1%
+}
+
+%% Author note environment
+\newenvironment{authornote}{%
+  \vfill
+  \noindent\textbf{Author Note}\par
+  \noindent
+}{}
+
+%% =============================================================================
+%% TITLE PAGE - APA 7th Edition Section 2.3-2.6
+%% =============================================================================
+
+\title{%
+  \vspace{2in}
+  \textbf{$title$}%
+  \vspace{0.5in}%
+}
+
+\author{%
+  $for(author)$
+  $author.name$$if(author.affiliation)$\\$author.affiliation$$endif$
+  $sep$\\[1em]
+  $endfor$
+}
+
+\date{}
+
+%% =============================================================================
+%% DOCUMENT CONTENT
+%% =============================================================================
+
+\begin{document}
+
+%% Title page
+\begin{titlepage}
+  \thispagestyle{fancy}
+
+  \begin{center}
+    \vspace*{2in}
+
+    %% Title - bold, centered, double-spaced
+    {\Large\bfseries\begin{doublespace}$title$\end{doublespace}}
+
+    \vspace{0.5in}
+
+    %% Authors and affiliations
+    $for(author)$
+    $author.name$
+    $sep$\\
+    $endfor$
+
+    \vspace{0.5em}
+
+    $if(institute)$
+    $for(institute)$
+    $institute$
+    $sep$\\
+    $endfor$
+    $endif$
+
+    $if(date)$
+    \vspace{0.5em}
+    $date$
+    $endif$
+
+  \end{center}
+
+  %% Author note (for professional papers)
+  $if(author-note)$
+  \begin{authornote}
+    $author-note$
+  \end{authornote}
+  $endif$
+\end{titlepage}
+
+%% Table of Contents (generated by pandoc --toc)
+$if(toc)$
+\newpage
+{
+  \hypersetup{linkcolor=black}
+  \setcounter{tocdepth}{$if(toc-depth)$$toc-depth$$else$2$endif$}
+  \renewcommand{\contentsname}{Table of Contents}
+  \tableofcontents
+  \newpage
+}
+$endif$
+
+%% Main content
+$body$
+
+\end{document}

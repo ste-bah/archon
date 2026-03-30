@@ -1,0 +1,15 @@
+{
+  "performance": {
+    "preTaskBudgetMs": 500,
+    "postTaskBudgetMs": 500,
+    "totalBudgetMs": 1000
+  },
+  "memory": {
+    "domains": ["project/*"],
+    "maxContextSize": 10000
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "json"
+  }
+}
