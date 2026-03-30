@@ -223,10 +223,27 @@ Local vector embedding server for the memory system.
 - **API**: FastAPI on port 8000
 
 ```bash
+# Default: local embeddings + local ChromaDB (no API keys needed)
 ./embedding-api/api-embed.sh start    # Starts ChromaDB + embedding API
 ./embedding-api/api-embed.sh status   # Check health
 ./embedding-api/api-embed.sh stop     # Shutdown
 ```
+
+**Cloud alternative**: If you don't want to run local embeddings (requires ~3GB for the model), use OpenAI embeddings + Zilliz Cloud instead:
+
+```bash
+# Add to your ~/.profile or ~/.zshrc
+export EMBEDDING_BACKEND=openai
+export OPENAI_API_KEY="sk-your-openai-key"
+export VECTOR_DB=zilliz
+export ZILLIZ_URI="https://your-cluster.serverless.aws-eu-west-1.cloud.zilliz.com"
+export ZILLIZ_TOKEN="your-zilliz-api-token"
+
+# Then start (no local ChromaDB needed)
+./embedding-api/api-embed.sh start
+```
+
+The embedding API auto-detects which backend to use from these environment variables. Local ChromaDB is the default if nothing is set.
 
 ---
 
