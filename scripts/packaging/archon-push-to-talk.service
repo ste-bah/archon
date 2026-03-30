@@ -1,0 +1,23 @@
+[Unit]
+Description=Archon Push-to-Talk Daemon
+Documentation=https://github.com/ste-bah/archon
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=__ARCHON_ROOT__
+Environment=PYTHONPATH=__ARCHON_ROOT__
+ExecStart=/bin/bash __ARCHON_ROOT__/scripts/archon/ptt-start.sh
+ExecStop=/bin/bash __ARCHON_ROOT__/scripts/archon/ptt-stop.sh
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=archon-push-to-talk
+
+# Wayland users: ensure this runs after the compositor
+# X11 users: no special ordering needed
+
+[Install]
+WantedBy=graphical-session.target

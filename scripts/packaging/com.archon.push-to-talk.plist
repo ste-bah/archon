@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.archon.push-to-talk</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>__ARCHON_ROOT__/scripts/archon/ptt-start.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__ARCHON_ROOT__</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__ARCHON_HOME__</string>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:__ARCHON_HOME__/.venv/bin</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>__ARCHON_HOME__/Library/Logs/archon/push-to-talk.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>__ARCHON_HOME__/Library/Logs/archon/push-to-talk.log</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Restart no faster than every 10 seconds on crash -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+</dict>
+</plist>

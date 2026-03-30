@@ -269,6 +269,16 @@ if [ -f "$PROJECT_DIR/scripts/packaging/com.archon.monitor.plist" ]; then
     echo -e "${GREEN}  Copied monitor launchd plist${NC}"
 fi
 
+if [ -f "$PROJECT_DIR/scripts/packaging/com.archon.push-to-talk.plist" ]; then
+    cp "$PROJECT_DIR/scripts/packaging/com.archon.push-to-talk.plist" "$OUTPUT_DIR/scripts/packaging/"
+    echo -e "${GREEN}  Copied push-to-talk launchd plist${NC}"
+fi
+
+if [ -f "$PROJECT_DIR/scripts/packaging/archon-push-to-talk.service" ]; then
+    cp "$PROJECT_DIR/scripts/packaging/archon-push-to-talk.service" "$OUTPUT_DIR/scripts/packaging/"
+    echo -e "${GREEN}  Copied push-to-talk systemd service${NC}"
+fi
+
 #===============================================================================
 # STEP 6f: Git Hooks (post-checkout, post-merge)
 #===============================================================================
