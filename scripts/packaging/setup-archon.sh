@@ -463,6 +463,11 @@ cat > "$MCP_JSON" << EOF
       "args": ["src/tool_factory/server.py"],
       "type": "stdio"
     },
+    "lancedb-memory": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp-servers/lancedb-memory/server.ts"],
+      "type": "stdio"
+    },
     "perplexity": {
       "command": "npx",
       "args": ["-y", "@perplexity-ai/mcp-server"],
@@ -475,8 +480,23 @@ cat > "$MCP_JSON" << EOF
 }
 EOF
 
-echo -e "${GREEN}  .mcp.json configured (serena, leann-search, tool-factory, perplexity)${NC}"
+echo -e "${GREEN}  .mcp.json configured (serena, leann-search, tool-factory, lancedb-memory, perplexity)${NC}"
 echo -e "${GREEN}  Note: memorygraph is registered at user level (Step 6)${NC}"
+
+# Optional: RocketChat MCP (for autonomous messaging — needs separate repo)
+if [ -n "\${ROCKETCHAT_URL}" ] || [ -d "$HOME/projects/rocketchat-mcp" ] || [ -d "$PROJECT_DIR/../rocketchat-mcp" ]; then
+    RC_PATH=""
+    [ -d "$HOME/projects/rocketchat-mcp" ] && RC_PATH="$HOME/projects/rocketchat-mcp"
+    [ -d "$PROJECT_DIR/../rocketchat-mcp" ] && RC_PATH="$PROJECT_DIR/../rocketchat-mcp"
+
+    if [ -n "$RC_PATH" ]; then
+        echo -e "${GREEN}  Found RocketChat MCP at $RC_PATH${NC}"
+        echo -e "${GREEN}  Register with: claude mcp add rocketchat -- npx tsx $RC_PATH/src/server.ts${NC}"
+    fi
+else
+    echo -e "${YELLOW}  Optional: RocketChat MCP not found (needed for autonomous messaging)${NC}"
+    echo -e "${YELLOW}  Install from: https://github.com/ste-bah/rocketchat-mcp${NC}"
+fi
 
 #===============================================================================
 # STEP 9: Configure .serena/project.yml

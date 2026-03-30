@@ -306,6 +306,11 @@ cat > "$OUTPUT_DIR/.mcp.json" << 'MCPEOF'
       "args": ["src/tool_factory/server.py"],
       "type": "stdio"
     },
+    "lancedb-memory": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp-servers/lancedb-memory/server.ts"],
+      "type": "stdio"
+    },
     "perplexity": {
       "command": "npx",
       "args": ["-y", "@perplexity-ai/mcp-server"],
