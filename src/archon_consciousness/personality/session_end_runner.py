@@ -114,6 +114,38 @@ def compute_signals_from_events(events: list[dict]) -> dict:
     }
 
 
+def read_corrections(corrections_path: str) -> list[dict]:
+    """Read JSONL corrections file written by the correction reporting protocol.
+
+    Each line: {"type": "<violation_type>", "ts": "<ISO-timestamp>"}
+    Valid types: factual_error, approach_correction, repeated_instruction,
+                 did_forbidden_action, acted_without_permission, repeated_correction
+
+    Returns:
+        List of parsed correction dicts (invalid types silently skipped).
+    """
+    from src.archon_consciousness.personality.personality_constants import VIOLATION_TYPES
+
+    if not os.path.exists(corrections_path):
+        return []
+
+    corrections = []
+    with open(corrections_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+                if entry.get("type") in VIOLATION_TYPES:
+                    corrections.append(entry)
+                else:
+                    logger.warning("Unknown correction type: %s", entry.get("type"))
+            except json.JSONDecodeError:
+                logger.warning("Skipping corrupt correction line: %s", line[:50])
+    return corrections
+
+
 def read_events(events_path: str) -> list[dict]:
     """Read JSONL events file, skipping corrupt lines.
 
@@ -161,7 +193,14 @@ def process_session_end(
     """
     # 1. Read events
     events = read_events(events_path)
-    if not events:
+
+    # 1b. Read corrections (same session dir, corrections.jsonl)
+    corrections_path = os.path.join(
+        os.path.dirname(events_path), "corrections.jsonl",
+    )
+    corrections = read_corrections(corrections_path)
+
+    if not events and not corrections:
         return {
             "events_processed": 0,
             "trust_persisted": False,
@@ -171,6 +210,7 @@ def process_session_end(
 
     # 2. Compute signals from events
     signals = compute_signals_from_events(events)
+    signals["corrections"] = len(corrections)
 
     # 3. Delegate to tested PersonalityHooks
     hooks = PersonalityHooks(
@@ -180,7 +220,19 @@ def process_session_end(
         session_num=session_num,
     )
 
-    # 4. Feed correction/success events into signal collector
+    # 4. Feed corrections into trust tracker (each violation type → severity damage)
+    for correction in corrections:
+        violation_type = correction.get("type", "factual_error")
+        try:
+            hooks._trust_tracker.record_violation(
+                violation_type,
+                f"Session correction: {violation_type} at {correction.get('ts', 'unknown')}",
+            )
+            logger.info("[session-end] Recorded violation: %s", violation_type)
+        except ValueError:
+            logger.warning("[session-end] Unknown violation type: %s", violation_type)
+
+    # 4b. Feed correction/success events into signal collector
     if signals["edit_count"] > 0 and signals["tdd_compliance"]:
         hooks.record_success()
 
