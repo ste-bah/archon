@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "projects": [
+    {
+      "name": "archon",
+      "path": "/Volumes/Externalwork/projects/claudeflow-testing",
+      "role": "primary",
+      "maxFiles": 5000,
+      "excludes": ["node_modules/**", ".god-agent/events.db*"]
+    },
+    {
+      "name": "market-terminal",
+      "path": "/Volumes/Externalwork/projects/claudeflow-testing/market-terminal",
+      "role": "secondary",
+      "maxFiles": 3000
+    }
+  ],
+  "indexConfig": {
+    "maxMemoryMB": 500,
+    "autoReindex": true,
+    "reindexIntervalMinutes": 30
+  }
+}

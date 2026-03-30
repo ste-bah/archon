@@ -1,0 +1,41 @@
+#!/bin/bash
+# post-checkout hook — Archon branch-aware memory
+# Args: $1=prev HEAD, $2=new HEAD, $3=1 if branch checkout (0 if file)
+# MUST exit 0 regardless. MUST complete < 500ms. Background Python.
+
+PREV_HEAD="$1"
+NEW_HEAD="$2"
+IS_BRANCH_CHECKOUT="${3:-0}"
+
+[ "$IS_BRANCH_CHECKOUT" -ne 1 ] 2>/dev/null && exit 0
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+[ -z "$ROOT" ] && exit 0
+
+# Use reflog for reliable previous branch detection
+PREV_BRANCH=$(git reflog show --format='%gs' -1 2>/dev/null | sed -n 's/.*from \(.*\) to .*/\1/p')
+[ -z "$PREV_BRANCH" ] && PREV_BRANCH="unknown"
+
+NEW_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+if [ "$NEW_BRANCH" = "HEAD" ]; then
+    SHORT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    NEW_BRANCH="detached:${SHORT_SHA}"
+fi
+
+LOG="$HOME/.archon/logs/hooks.log"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null
+
+# Pass branch names via env vars — NEVER interpolate into -c strings
+(
+    PYTHONPATH="$ROOT/src" \
+    ARCHON_PREV_BRANCH="$PREV_BRANCH" \
+    ARCHON_NEW_BRANCH="$NEW_BRANCH" \
+    python3 -c "
+import os
+from workspace.git_hooks import on_branch_switch
+on_branch_switch(os.environ['ARCHON_PREV_BRANCH'], os.environ['ARCHON_NEW_BRANCH'])
+" >> "$LOG" 2>&1
+) &
+
+exit 0

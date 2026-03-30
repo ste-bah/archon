@@ -40,7 +40,7 @@ NC='\033[0m' # No Color
 NODE_VERSION="22"
 PYTHON_MIN_VERSION="3.11"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-TOTAL_STEPS=14
+TOTAL_STEPS=17
 
 # Parse arguments
 SKIP_NVM=false
@@ -232,8 +232,12 @@ if [ "$SKIP_PYTHON" = false ]; then
     echo "  Installing project Python dependencies..."
     pip install fastmcp jsonschema pytest mcp
 
+    # Voice MCP dependencies (STT + TTS)
+    echo "  Installing voice dependencies (faster-whisper, sounddevice, numpy)..."
+    pip install faster-whisper sounddevice numpy 2>&1 | tail -3
+
     echo -e "${GREEN}  Python environment ready at ~/.venv: $(python --version)${NC}"
-    echo -e "${GREEN}  Installed: fastmcp, jsonschema, pytest, mcp${NC}"
+    echo -e "${GREEN}  Installed: fastmcp, jsonschema, pytest, mcp, faster-whisper, sounddevice, numpy${NC}"
     echo -e "${GREEN}  Note: Embedding API deps installed separately in Step 7b${NC}"
 else
     echo -e "${YELLOW}[4/${TOTAL_STEPS}] Skipping Python environment setup${NC}"
@@ -475,12 +479,22 @@ cat > "$MCP_JSON" << EOF
       "env": {
         "PERPLEXITY_API_KEY": "\${PERPLEXITY_API_KEY}"
       }
+    },
+    "archon-monitor": {
+      "command": "$HOME/.venv/bin/python3",
+      "args": ["-m", "src.archon_monitor.server"],
+      "type": "stdio"
+    },
+    "voice-mcp": {
+      "command": "$HOME/.venv/bin/python3",
+      "args": ["-m", "src.voice_mcp"],
+      "type": "stdio"
     }
   }
 }
 EOF
 
-echo -e "${GREEN}  .mcp.json configured (serena, leann-search, tool-factory, lancedb-memory, perplexity)${NC}"
+echo -e "${GREEN}  .mcp.json configured (serena, leann-search, tool-factory, lancedb-memory, perplexity, archon-monitor, voice-mcp)${NC}"
 echo -e "${GREEN}  Note: memorygraph is registered at user level (Step 6)${NC}"
 
 # Optional: RocketChat MCP (for autonomous messaging — needs separate repo)
@@ -646,6 +660,74 @@ else
 fi
 
 #===============================================================================
+# STEP 12b: Install Git Hooks (branch-aware memory)
+#===============================================================================
+echo -e "${YELLOW}[12b/${TOTAL_STEPS}] Installing git hooks (branch-aware memory)...${NC}"
+
+GIT_HOOKS_SRC="$PROJECT_DIR/scripts/git-hooks"
+GIT_HOOKS_DST="$PROJECT_DIR/.git/hooks"
+
+if [ -d "$GIT_HOOKS_SRC" ] && [ -d "$PROJECT_DIR/.git" ]; then
+    for hook in post-checkout post-merge; do
+        if [ -f "$GIT_HOOKS_SRC/$hook" ]; then
+            cp "$GIT_HOOKS_SRC/$hook" "$GIT_HOOKS_DST/$hook"
+            chmod +x "$GIT_HOOKS_DST/$hook"
+            echo -e "${GREEN}  Installed $hook hook${NC}"
+        fi
+    done
+else
+    echo -e "${YELLOW}  Skipped: git hooks source or .git directory not found${NC}"
+fi
+
+#===============================================================================
+# STEP 12c: Install Benchmark Schedule (weekly self-assessment)
+#===============================================================================
+echo -e "${YELLOW}[12c/${TOTAL_STEPS}] Installing benchmark schedule...${NC}"
+
+BENCHMARK_PLIST_SRC="$PROJECT_DIR/scripts/packaging/com.archon.benchmark.plist"
+BENCHMARK_PLIST_DST="$HOME/Library/LaunchAgents/com.archon.benchmark.plist"
+
+if [ -f "$BENCHMARK_PLIST_SRC" ]; then
+    mkdir -p "$HOME/.archon/logs"
+    mkdir -p "$HOME/.archon/benchmark"
+    cp "$BENCHMARK_PLIST_SRC" "$BENCHMARK_PLIST_DST"
+    launchctl bootstrap "gui/$(id -u)" "$BENCHMARK_PLIST_DST" 2>/dev/null || true
+    echo -e "${GREEN}  Benchmark schedule installed (weekly Sunday 02:00)${NC}"
+    echo -e "${GREEN}  Config: ~/.archon/benchmark/config.json (auto-created on first run)${NC}"
+else
+    echo -e "${YELLOW}  Skipped: benchmark plist not found${NC}"
+fi
+
+# Create monitor runtime directories
+mkdir -p "$HOME/.archon/monitor"
+mkdir -p "$HOME/.archon/alerts"
+echo -e "${GREEN}  Monitor directories created (~/.archon/monitor, ~/.archon/alerts)${NC}"
+
+#===============================================================================
+# STEP 12d: Install Monitor Daemon (proactive PID/log/directory monitoring)
+#===============================================================================
+echo -e "${YELLOW}[12d/${TOTAL_STEPS}] Installing monitor daemon...${NC}"
+
+MONITOR_PLIST_SRC="$PROJECT_DIR/scripts/packaging/com.archon.monitor.plist"
+MONITOR_PLIST_DST="$HOME/Library/LaunchAgents/com.archon.monitor.plist"
+
+if [ -f "$MONITOR_PLIST_SRC" ]; then
+    mkdir -p "$HOME/.archon/logs"
+    # Substitute placeholders with actual paths
+    sed \
+        -e "s|__PYTHON3__|$PYTHON_CMD|g" \
+        -e "s|__ARCHON_ROOT__|$PROJECT_DIR|g" \
+        -e "s|__ARCHON_HOME__|$HOME/.archon|g" \
+        "$MONITOR_PLIST_SRC" > "$MONITOR_PLIST_DST"
+    launchctl bootstrap "gui/$(id -u)" "$MONITOR_PLIST_DST" 2>/dev/null || true
+    echo -e "${GREEN}  Monitor daemon installed (com.archon.monitor)${NC}"
+    echo -e "${GREEN}  Socket: ~/.archon/monitor/monitor.sock${NC}"
+    echo -e "${GREEN}  Log:    ~/.archon/logs/monitor-stderr.log${NC}"
+else
+    echo -e "${YELLOW}  Skipped: monitor plist not found${NC}"
+fi
+
+#===============================================================================
 # STEP 13: Shell Profile Additions
 #===============================================================================
 echo -e "${YELLOW}[13/${TOTAL_STEPS}] Creating shell profile additions...${NC}"
@@ -688,7 +770,7 @@ echo -e "${YELLOW}[14/${TOTAL_STEPS}] Running quick smoke test...${NC}"
 cd "$PROJECT_DIR"
 VERIFY_PASS=0
 VERIFY_FAIL=0
-VERIFY_TOTAL=8
+VERIFY_TOTAL=11
 
 # Rebuild native modules (prevents HNSW binding failures)
 echo "  Rebuilding native modules for Node $(node --version)..."
@@ -752,13 +834,41 @@ else
     echo -e "${YELLOW}SKIP (no seeds file)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
 fi
 
-# 8. .mcp.json has all 4 servers
+# 8. .mcp.json has all 7 servers
 echo -n "  [8/$VERIFY_TOTAL] MCP server config... "
 MCP_SERVER_COUNT=$(python3 -c "import json; print(len(json.load(open('$PROJECT_DIR/.mcp.json')).get('mcpServers',{})))" 2>/dev/null || echo "0")
-if [ "$MCP_SERVER_COUNT" -ge 4 ]; then
+if [ "$MCP_SERVER_COUNT" -ge 7 ]; then
     echo -e "${GREEN}PASS ($MCP_SERVER_COUNT servers configured)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
 else
-    echo -e "${RED}FAIL (expected 4, got $MCP_SERVER_COUNT)${NC}"; VERIFY_FAIL=$((VERIFY_FAIL + 1))
+    echo -e "${RED}FAIL (expected 7, got $MCP_SERVER_COUNT)${NC}"; VERIFY_FAIL=$((VERIFY_FAIL + 1))
+fi
+
+# 9. Voice MCP serves over stdio (real MCP smoke test — import success != MCP server works)
+echo -n "  [9/$VERIFY_TOTAL] Voice MCP stdio (JSON-RPC)... "
+_VOICE_RESP=$(echo '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke-test","version":"1.0"}},"id":1}' \
+    | timeout 5 /usr/bin/env PYTHONPATH="$PROJECT_DIR" "$PYTHON_CMD" -m src.voice_mcp 2>/dev/null | head -1)
+if echo "$_VOICE_RESP" | grep -q '"id":1'; then
+    echo -e "${GREEN}PASS (JSON-RPC response received)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
+else
+    echo -e "${RED}FAIL (no JSON-RPC response — FastMCP wiring missing?)${NC}"; VERIFY_FAIL=$((VERIFY_FAIL + 1))
+fi
+
+# 10. Archon Monitor MCP serves over stdio
+echo -n "  [10/$VERIFY_TOTAL] Archon Monitor stdio (JSON-RPC)... "
+_MONITOR_RESP=$(echo '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke-test","version":"1.0"}},"id":1}' \
+    | timeout 5 /usr/bin/env PYTHONPATH="$PROJECT_DIR" "$PYTHON_CMD" -m src.archon_monitor.server 2>/dev/null | head -1)
+if echo "$_MONITOR_RESP" | grep -q '"id":1'; then
+    echo -e "${GREEN}PASS (JSON-RPC response received)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
+else
+    echo -e "${RED}FAIL (no JSON-RPC response — FastMCP wiring missing?)${NC}"; VERIFY_FAIL=$((VERIFY_FAIL + 1))
+fi
+
+# 11. Git hooks installed
+echo -n "  [11/$VERIFY_TOTAL] Git hooks installed... "
+if [ -x "$PROJECT_DIR/.git/hooks/post-checkout" ] && [ -x "$PROJECT_DIR/.git/hooks/post-merge" ]; then
+    echo -e "${GREEN}PASS${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
+else
+    echo -e "${YELLOW}SKIP (no .git or hooks not installed)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
 fi
 
 echo ""
@@ -772,11 +882,9 @@ fi
 # Show MCP server list (informational, not a pass/fail gate)
 echo ""
 echo "MCP server registrations (informational):"
-claude mcp list 2>/dev/null | grep -E "memorygraph|serena|leann|tool-factory|perplexity|Connected|Failed" || echo "  (Run 'claude' to authenticate and verify MCP servers)"
-    VERIFY_FAIL=$((VERIFY_FAIL + 1))
-fi
+claude mcp list 2>/dev/null | grep -E "memorygraph|serena|leann|tool-factory|perplexity|archon-monitor|voice-mcp|Connected|Failed" || echo "  (Run 'claude' to authenticate and verify MCP servers)"
 
-# 14d: LEANN note
+# LEANN note
 echo ""
 echo -e "${BLUE}  Note: LEANN will auto-index the codebase on first Claude Code session start.${NC}"
 echo -e "${BLUE}  The SessionStart hook triggers queue processing automatically.${NC}"
@@ -799,6 +907,9 @@ echo "  - MemoryGraph:      $HOME/.memorygraph-venv (FalkorDB Lite, from fork)"
 echo "  - LEANN Search:     $PROJECT_DIR/src/mcp-servers/leann-search/ (auto-indexes)"
 echo "  - LanceDB Memory:   $PROJECT_DIR/src/mcp-servers/lancedb-memory/server.ts"
 echo "  - Tool Factory:     $PROJECT_DIR/src/tool_factory/server.py"
+echo "  - Archon Monitor:   $PROJECT_DIR/src/archon_monitor/ (daemon + notifications)"
+echo "  - Voice MCP:        $PROJECT_DIR/src/voice_mcp/ (STT + TTS)"
+echo "  - Benchmark Suite:  $PROJECT_DIR/scripts/benchmark/ (EWMA regression)"
 echo "  - Embedding API:    $PROJECT_DIR/embedding-api/ (vector embeddings for memory/UCM)"
 echo "  - Dynamic Agents:   $PROJECT_DIR/.claude/agents/custom/ (8 skills)"
 echo "  - Archon Runner:    $HOME/.archon/scripts/"
@@ -807,10 +918,13 @@ echo "MCP Servers (project-level in .mcp.json):"
 echo "  1. serena          - Symbol-level code navigation"
 echo "  2. leann-search    - Semantic code search (HNSW vectors)"
 echo "  3. tool-factory    - Dynamic tool creation (FastMCP)"
-echo "  4. perplexity      - Web search (needs PERPLEXITY_API_KEY)"
+echo "  4. lancedb-memory  - Vector memory search"
+echo "  5. perplexity      - Web search (needs PERPLEXITY_API_KEY)"
+echo "  6. archon-monitor  - Proactive monitoring + notifications"
+echo "  7. voice-mcp       - Voice I/O (STT via faster-whisper, TTS via say/Kokoro)"
 echo ""
 echo "MCP Servers (user-level via 'claude mcp add'):"
-echo "  5. memorygraph     - Graph memory (FalkorDB Lite, from fork)"
+echo "  8. memorygraph     - Graph memory (FalkorDB Lite, from fork)"
 echo ""
 echo "Smoke test: $VERIFY_PASS/$VERIFY_TOTAL passed"
 if [ "$VERIFY_FAIL" -eq 0 ]; then

@@ -8,9 +8,9 @@
 
 Archon is a persistent intelligence layer for Claude Code. It gives your AI agent graph-based memory that survives across sessions, a personality system that evolves from experience, autonomous background learning, and the ability to create and improve its own specialized sub-agents on the fly.
 
-Built over several months of daily use. 1,577 source files. 288 agent definitions. 102+ automated tests. Every behavioral rule learned from a real mistake.
+Built over several months of daily use. 1,577 source files. 288 agent definitions. 469+ automated tests. Every behavioral rule learned from a real mistake.
 
-**Version**: 1.0.0 | **Last Updated**: March 2026
+**Version**: 2.0.0 | **Last Updated**: March 2026
 
 ---
 
@@ -27,6 +27,10 @@ Built over several months of daily use. 1,577 source files. 288 agent definition
 | **Autonomous Operation** | 5 background agents run every 30 minutes: learning, memory consolidation, message polling, code indexing, outreach. |
 | **Semantic Code Search** | LEANN indexes your entire codebase with HNSW vectors. Find code by meaning, not just keywords. |
 | **Runtime Tool Creation** | Tool Factory MCP server lets agents create Python tools on the fly, sandboxed with process group isolation. |
+| **Voice I/O** | Push-to-talk STT via faster-whisper (Apple Silicon optimised). TTS via macOS `say`. 4 MCP tools: `voice_listen`, `voice_speak`, `voice_stop`, `voice_status`. |
+| **Proactive Monitor** | Singleton daemon tracks PIDs, log files, and directories. Notifies via MCP when processes exit, logs spike errors, or directories change. |
+| **Workspace Awareness** | Multi-repo manifest. Git hooks fire on branch switch and merge — branch context stored in MemoryGraph automatically. |
+| **Self-Benchmarking** | Weekly EWMA regression detection. 5 scorer types. Circuit breaker pauses if quality drops >25%. 30 reference tasks. |
 
 ---
 
@@ -95,6 +99,8 @@ User
   |     tool-factory ------------- dynamic Python tool creation
   |     perplexity --------------- web search
   |     lancedb-memory ----------- vector memory (dual-store)
+  |     archon-monitor ----------- proactive PID/log/directory monitor (daemon-backed)
+  |     voice-mcp ---------------- STT + TTS (faster-whisper + say/Kokoro)
   |
   +-- Background Agents (launchd, every 30 min)
         com.archon.learn ---------- self-directed web learning
@@ -102,6 +108,7 @@ User
         com.archon.outreach ------- alert checks, proactive messages
         com.archon.leann-drain ---- code index queue processing
         com.archon.rc-prefilter --- RocketChat message polling
+        com.archon.monitor -------- proactive monitor daemon (persistent)
 ```
 
 ---

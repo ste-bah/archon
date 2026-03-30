@@ -26,7 +26,7 @@ NC='\033[0m'
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUTPUT_DIR="$PROJECT_DIR/archon-package"
 CREATE_TARBALL=false
-VERSION="3.0.0"
+VERSION="4.0.0"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -65,7 +65,7 @@ rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 
 STEP=0
-TOTAL_STEPS=17
+TOTAL_STEPS=22
 
 #===============================================================================
 # STEP 1: God Agent Core Source
@@ -195,6 +195,96 @@ else
 fi
 
 #===============================================================================
+# STEP 6b: Workspace Module (multi-project, git hooks, branch context)
+#===============================================================================
+STEP=$((STEP + 1))
+echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Copying workspace module (src/workspace/)...${NC}"
+if [ -d "$PROJECT_DIR/src/workspace" ]; then
+    cp -r "$PROJECT_DIR/src/workspace" "$OUTPUT_DIR/src/"
+    find "$OUTPUT_DIR/src/workspace" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    WS_COUNT=$(find "$OUTPUT_DIR/src/workspace" -name "*.py" | wc -l | tr -d ' ')
+    echo -e "${GREEN}  Done: $WS_COUNT Python files (manifest, namespace, branch context, git hooks, search)${NC}"
+else
+    echo -e "${YELLOW}  Warning: src/workspace/ not found, skipping${NC}"
+fi
+
+#===============================================================================
+# STEP 6c: Voice MCP Server (STT + TTS)
+#===============================================================================
+STEP=$((STEP + 1))
+echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Copying Voice MCP server (src/voice_mcp/)...${NC}"
+if [ -d "$PROJECT_DIR/src/voice_mcp" ]; then
+    cp -r "$PROJECT_DIR/src/voice_mcp" "$OUTPUT_DIR/src/"
+    find "$OUTPUT_DIR/src/voice_mcp" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    VM_COUNT=$(find "$OUTPUT_DIR/src/voice_mcp" -name "*.py" | wc -l | tr -d ' ')
+    echo -e "${GREEN}  Done: $VM_COUNT Python files (server, stt, tts, audio)${NC}"
+else
+    echo -e "${YELLOW}  Warning: src/voice_mcp/ not found, skipping${NC}"
+fi
+
+#===============================================================================
+# STEP 6d: Archon Monitor (daemon, dispatch, pipeline monitor)
+#===============================================================================
+STEP=$((STEP + 1))
+echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Copying Archon Monitor (src/archon_monitor/)...${NC}"
+if [ -d "$PROJECT_DIR/src/archon_monitor" ]; then
+    cp -r "$PROJECT_DIR/src/archon_monitor" "$OUTPUT_DIR/src/"
+    find "$OUTPUT_DIR/src/archon_monitor" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    AM_COUNT=$(find "$OUTPUT_DIR/src/archon_monitor" -name "*.py" | wc -l | tr -d ' ')
+    echo -e "${GREEN}  Done: $AM_COUNT Python files (daemon, models, patterns, dispatch, rate limiter, pipeline monitor)${NC}"
+else
+    echo -e "${YELLOW}  Warning: src/archon_monitor/ not found, skipping${NC}"
+fi
+
+#===============================================================================
+# STEP 6e: Benchmark Suite (harness, scorers, regression, scheduler)
+#===============================================================================
+STEP=$((STEP + 1))
+echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Copying Benchmark Suite (scripts/benchmark/)...${NC}"
+if [ -d "$PROJECT_DIR/scripts/benchmark" ]; then
+    mkdir -p "$OUTPUT_DIR/scripts/benchmark"
+    cp "$PROJECT_DIR/scripts/benchmark/"*.py "$OUTPUT_DIR/scripts/benchmark/" 2>/dev/null || true
+    BM_COUNT=$(find "$OUTPUT_DIR/scripts/benchmark" -name "*.py" | wc -l | tr -d ' ')
+    echo -e "${GREEN}  Done: $BM_COUNT Python files (schemas, scorers, cost_tracker, regression, scheduler)${NC}"
+else
+    echo -e "${YELLOW}  Warning: scripts/benchmark/ not found, skipping${NC}"
+fi
+
+# Copy benchmark reference tasks
+if [ -f "$PROJECT_DIR/tests/benchmark/reference-tasks.jsonl" ]; then
+    mkdir -p "$OUTPUT_DIR/tests/benchmark"
+    cp "$PROJECT_DIR/tests/benchmark/reference-tasks.jsonl" "$OUTPUT_DIR/tests/benchmark/"
+    echo -e "${GREEN}  Copied 30 reference tasks (reference-tasks.jsonl)${NC}"
+fi
+
+# Copy benchmark + monitor launchd plists
+mkdir -p "$OUTPUT_DIR/scripts/packaging"
+if [ -f "$PROJECT_DIR/scripts/packaging/com.archon.benchmark.plist" ]; then
+    cp "$PROJECT_DIR/scripts/packaging/com.archon.benchmark.plist" "$OUTPUT_DIR/scripts/packaging/"
+    echo -e "${GREEN}  Copied benchmark launchd plist${NC}"
+fi
+
+if [ -f "$PROJECT_DIR/scripts/packaging/com.archon.monitor.plist" ]; then
+    cp "$PROJECT_DIR/scripts/packaging/com.archon.monitor.plist" "$OUTPUT_DIR/scripts/packaging/"
+    echo -e "${GREEN}  Copied monitor launchd plist${NC}"
+fi
+
+#===============================================================================
+# STEP 6f: Git Hooks (post-checkout, post-merge)
+#===============================================================================
+STEP=$((STEP + 1))
+echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Copying git hooks (scripts/git-hooks/)...${NC}"
+if [ -d "$PROJECT_DIR/scripts/git-hooks" ]; then
+    mkdir -p "$OUTPUT_DIR/scripts/git-hooks"
+    cp "$PROJECT_DIR/scripts/git-hooks/"* "$OUTPUT_DIR/scripts/git-hooks/" 2>/dev/null || true
+    chmod +x "$OUTPUT_DIR/scripts/git-hooks/"* 2>/dev/null || true
+    GH_COUNT=$(find "$OUTPUT_DIR/scripts/git-hooks" -type f | wc -l | tr -d ' ')
+    echo -e "${GREEN}  Done: $GH_COUNT hook scripts (post-checkout, post-merge)${NC}"
+else
+    echo -e "${YELLOW}  Warning: scripts/git-hooks/ not found, skipping${NC}"
+fi
+
+#===============================================================================
 # STEP 7: PDF Generator (optional)
 #===============================================================================
 STEP=$((STEP + 1))
@@ -318,6 +408,16 @@ cat > "$OUTPUT_DIR/.mcp.json" << 'MCPEOF'
       "env": {
         "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
       }
+    },
+    "archon-monitor": {
+      "command": "${HOME}/.venv/bin/python3",
+      "args": ["-m", "src.archon_monitor.server"],
+      "type": "stdio"
+    },
+    "voice-mcp": {
+      "command": "${HOME}/.venv/bin/python3",
+      "args": ["-m", "src.voice_mcp"],
+      "type": "stdio"
     }
   }
 }
@@ -683,17 +783,22 @@ echo ""
 echo "Directory Structure Created:"
 echo "  - src/god-agent/           : God Agent core (TypeScript)"
 echo "  - src/archon_consciousness/: Consciousness + Personality (Python)"
+echo "  - src/workspace/           : Multi-project awareness + git-aware memory"
+echo "  - src/archon_monitor/      : Monitor daemon + notification dispatch"
+echo "  - src/voice_mcp/           : Voice I/O MCP server (STT + TTS)"
 echo "  - src/mcp-servers/         : LEANN search + LanceDB memory"
 echo "  - src/agent-system/        : Dynamic agent creation utilities"
 echo "  - src/tool_factory/        : Tool Factory MCP server (Python)"
 echo "  - src/pdf-generator/       : PDF generation (optional)"
+echo "  - scripts/benchmark/       : Self-benchmark suite (EWMA regression)"
+echo "  - scripts/git-hooks/       : Git hooks (post-checkout, post-merge)"
 echo "  - .claude/                 : Settings, hooks, skills, commands"
 echo "  - .claude/agents/custom/   : Custom agent definitions"
-echo "  - tests/                   : Test suite"
+echo "  - tests/                   : Test suite (469+ tests)"
 echo "  - docs/                    : Documentation (empty)"
 echo "  - scripts/archon/          : Autonomous operation scripts"
 echo "  - scripts/hooks/           : Hook implementations"
-echo "  - scripts/packaging/       : Setup + package scripts"
+echo "  - scripts/packaging/       : Setup + package scripts + launchd plists"
 echo "  - .persistent-memory/      : Personality state template"
 echo "  - .ucm/                    : UCM hook configuration"
 echo "  - .god-agent/              : Runtime data (auto-created)"

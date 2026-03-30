@@ -35,6 +35,16 @@
       "env": {
         "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
       }
+    },
+    "archon-monitor": {
+      "command": "${HOME}/.venv/bin/python3",
+      "args": ["-m", "src.archon_monitor.server"],
+      "type": "stdio"
+    },
+    "voice-mcp": {
+      "command": "${HOME}/.venv/bin/python3",
+      "args": ["-m", "src.voice_mcp"],
+      "type": "stdio"
     }
   }
 }

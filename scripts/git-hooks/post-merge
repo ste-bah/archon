@@ -1,0 +1,39 @@
+#!/bin/bash
+# post-merge hook — Archon branch-aware memory tag-and-promote
+# Args: $1=squash flag (1 if squash merge, 0 otherwise)
+# MUST exit 0 regardless. Background Python.
+
+SQUASH_FLAG="${1:-0}"
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+[ -z "$ROOT" ] && exit 0
+
+TARGET_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+# Detect merged branch from commit message (sed only — grep -P not on macOS)
+MERGED_BRANCH=$(git log -1 --format="%s" | sed -n "s/.*Merge branch '\([^']*\)'.*/\1/p" 2>/dev/null)
+[ -z "$MERGED_BRANCH" ] && MERGED_BRANCH="unknown"
+
+LOG="$HOME/.archon/logs/hooks.log"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null
+
+SQUASH_PY="False"
+[ "$SQUASH_FLAG" -eq 1 ] 2>/dev/null && SQUASH_PY="True"
+
+# Pass branch names via env vars — NEVER interpolate into -c strings
+(
+    PYTHONPATH="$ROOT/src" \
+    ARCHON_MERGED_BRANCH="$MERGED_BRANCH" \
+    ARCHON_TARGET_BRANCH="$TARGET_BRANCH" \
+    ARCHON_SQUASH="$SQUASH_PY" \
+    python3 -c "
+import os
+from workspace.git_hooks import on_branch_merge
+on_branch_merge(
+    os.environ['ARCHON_MERGED_BRANCH'],
+    os.environ['ARCHON_TARGET_BRANCH'],
+    squash=(os.environ['ARCHON_SQUASH'] == 'True'),
+)
+" >> "$LOG" 2>&1
+) &
+
+exit 0
