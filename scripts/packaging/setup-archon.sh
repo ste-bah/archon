@@ -40,7 +40,7 @@ NC='\033[0m' # No Color
 NODE_VERSION="22"
 PYTHON_MIN_VERSION="3.11"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-TOTAL_STEPS=17
+TOTAL_STEPS=18
 
 # Parse arguments
 SKIP_NVM=false
@@ -233,11 +233,11 @@ if [ "$SKIP_PYTHON" = false ]; then
     pip install fastmcp jsonschema pytest mcp
 
     # Voice MCP dependencies (STT + TTS)
-    echo "  Installing voice dependencies (faster-whisper, sounddevice, numpy)..."
-    pip install faster-whisper sounddevice numpy 2>&1 | tail -3
+    echo "  Installing voice dependencies (faster-whisper, sounddevice, numpy, pynput)..."
+    pip install faster-whisper sounddevice numpy pynput 2>&1 | tail -3
 
     echo -e "${GREEN}  Python environment ready at ~/.venv: $(python --version)${NC}"
-    echo -e "${GREEN}  Installed: fastmcp, jsonschema, pytest, mcp, faster-whisper, sounddevice, numpy${NC}"
+    echo -e "${GREEN}  Installed: fastmcp, jsonschema, pytest, mcp, faster-whisper, sounddevice, numpy, pynput${NC}"
     echo -e "${GREEN}  Note: Embedding API deps installed separately in Step 7b${NC}"
 else
     echo -e "${YELLOW}[4/${TOTAL_STEPS}] Skipping Python environment setup${NC}"
@@ -585,7 +585,8 @@ mkdir -p "$PROJECT_DIR/tmp"
 mkdir -p "$PROJECT_DIR/logs"
 mkdir -p "$PROJECT_DIR/config"
 
-echo -e "${GREEN}  Runtime directories created (incl .agentdb for GraphDB/SoNA)${NC}"
+mkdir -p "$HOME/.archon/ptt"
+echo -e "${GREEN}  Runtime directories created (incl .agentdb for GraphDB/SoNA, ~/.archon/ptt for push-to-talk)${NC}"
 
 #===============================================================================
 # STEP 11: Archon Seed Data Import (identity, values, behavioral rules)
@@ -725,6 +726,52 @@ if [ -f "$MONITOR_PLIST_SRC" ]; then
     echo -e "${GREEN}  Log:    ~/.archon/logs/monitor-stderr.log${NC}"
 else
     echo -e "${YELLOW}  Skipped: monitor plist not found${NC}"
+fi
+
+#===============================================================================
+# STEP 12e: Install Push-to-Talk Daemon
+#===============================================================================
+echo -e "${YELLOW}[12e/${TOTAL_STEPS}] Installing push-to-talk daemon...${NC}"
+
+mkdir -p "$HOME/.archon/ptt"
+
+if [[ "$(uname)" == "Darwin" ]]; then
+    PTT_PLIST_SRC="$PROJECT_DIR/scripts/packaging/com.archon.push-to-talk.plist"
+    PTT_PLIST_DST="$HOME/Library/LaunchAgents/com.archon.push-to-talk.plist"
+    if [ -f "$PTT_PLIST_SRC" ]; then
+        mkdir -p "$HOME/Library/Logs/archon"
+        sed \
+            -e "s|__ARCHON_ROOT__|$PROJECT_DIR|g" \
+            -e "s|__ARCHON_HOME__|$HOME|g" \
+            "$PTT_PLIST_SRC" > "$PTT_PLIST_DST"
+        launchctl bootstrap "gui/$(id -u)" "$PTT_PLIST_DST" 2>/dev/null || true
+        echo -e "${GREEN}  Push-to-talk daemon installed (com.archon.push-to-talk)${NC}"
+        echo -e "${GREEN}  Hotkey: ctrl+shift+space (configure in ~/.archon/ptt.json)${NC}"
+        echo -e "${GREEN}  Log:    ~/Library/Logs/archon/push-to-talk.log${NC}"
+        echo -e "${GREEN}  Start:  bash $PROJECT_DIR/scripts/archon/ptt-start.sh${NC}"
+        echo -e "${GREEN}  Stop:   bash $PROJECT_DIR/scripts/archon/ptt-stop.sh${NC}"
+        echo -e "${GREEN}  Status: bash $PROJECT_DIR/scripts/archon/ptt-status.sh${NC}"
+    else
+        echo -e "${YELLOW}  Skipped: push-to-talk plist not found${NC}"
+    fi
+else
+    # Linux: install systemd user service
+    PTT_SERVICE_SRC="$PROJECT_DIR/scripts/packaging/archon-push-to-talk.service"
+    SYSTEMD_DIR="$HOME/.config/systemd/user"
+    PTT_SERVICE_DST="$SYSTEMD_DIR/archon-push-to-talk.service"
+    if [ -f "$PTT_SERVICE_SRC" ]; then
+        mkdir -p "$SYSTEMD_DIR"
+        sed -e "s|__ARCHON_ROOT__|$PROJECT_DIR|g" "$PTT_SERVICE_SRC" > "$PTT_SERVICE_DST"
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable archon-push-to-talk 2>/dev/null || true
+        echo -e "${GREEN}  Push-to-talk systemd service installed (archon-push-to-talk)${NC}"
+        echo -e "${GREEN}  Hotkey: ctrl+shift+space (configure in ~/.archon/ptt.json)${NC}"
+        echo -e "${GREEN}  Start:  bash $PROJECT_DIR/scripts/archon/ptt-start.sh${NC}"
+        echo -e "${GREEN}  Stop:   bash $PROJECT_DIR/scripts/archon/ptt-stop.sh${NC}"
+        echo -e "${GREEN}  Status: bash $PROJECT_DIR/scripts/archon/ptt-status.sh${NC}"
+    else
+        echo -e "${YELLOW}  Skipped: push-to-talk service file not found${NC}"
+    fi
 fi
 
 #===============================================================================
@@ -909,6 +956,7 @@ echo "  - LanceDB Memory:   $PROJECT_DIR/src/mcp-servers/lancedb-memory/server.t
 echo "  - Tool Factory:     $PROJECT_DIR/src/tool_factory/server.py"
 echo "  - Archon Monitor:   $PROJECT_DIR/src/archon_monitor/ (daemon + notifications)"
 echo "  - Voice MCP:        $PROJECT_DIR/src/voice_mcp/ (STT + TTS)"
+echo "  - Push-to-Talk:     $PROJECT_DIR/src/voice_mcp/push_to_talk.py (hotkey → STT → inject)"
 echo "  - Benchmark Suite:  $PROJECT_DIR/scripts/benchmark/ (EWMA regression)"
 echo "  - Embedding API:    $PROJECT_DIR/embedding-api/ (vector embeddings for memory/UCM)"
 echo "  - Dynamic Agents:   $PROJECT_DIR/.claude/agents/custom/ (8 skills)"

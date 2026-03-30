@@ -111,7 +111,7 @@ class TestSpeechToText:
         mock_model = MagicMock()
         mock_segment = MagicMock()
         mock_segment.text = " hello world "
-        mock_segment.avg_log_prob = -0.2
+        mock_segment.avg_logprob = -0.2
         mock_info = MagicMock()
         mock_info.language = "en"
         mock_model.transcribe.return_value = ([mock_segment], mock_info)
@@ -129,7 +129,7 @@ class TestSpeechToText:
         stt = SpeechToText()
         mock_seg = MagicMock()
         mock_seg.text = "test"
-        mock_seg.avg_log_prob = 0.0  # perfect
+        mock_seg.avg_logprob = 0.0  # perfect
         mock_info = MagicMock()
         mock_info.language = "en"
         stt._model = MagicMock()
@@ -143,7 +143,7 @@ class TestSpeechToText:
         stt = SpeechToText()
         mock_seg = MagicMock()
         mock_seg.text = "test"
-        mock_seg.avg_log_prob = -1.0  # very low
+        mock_seg.avg_logprob = -1.0  # very low
         mock_info = MagicMock()
         mock_info.language = "en"
         stt._model = MagicMock()
@@ -168,7 +168,7 @@ class TestSpeechToText:
     def test_lazy_load_on_transcribe(self):
         stt = SpeechToText()
         mock_model_cls = MagicMock()
-        mock_seg = MagicMock(text="test", avg_log_prob=-0.1)
+        mock_seg = MagicMock(text="test", avg_logprob=-0.1)
         mock_info = MagicMock(language="en")
         mock_model_cls.return_value.transcribe.return_value = ([mock_seg], mock_info)
 
@@ -183,7 +183,7 @@ class TestSpeechToText:
         stt._model_name = "base.en"
 
         mock_model_cls = MagicMock()
-        mock_seg = MagicMock(text="hi", avg_log_prob=-0.1)
+        mock_seg = MagicMock(text="hi", avg_logprob=-0.1)
         mock_info = MagicMock(language="en")
         mock_model_cls.return_value.transcribe.return_value = ([mock_seg], mock_info)
 

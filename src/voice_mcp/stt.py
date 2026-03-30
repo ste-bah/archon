@@ -70,6 +70,13 @@ class SpeechToText:
             return None
         return _MODEL_RAM_MB.get(self._model_name)
 
+    def preload(self, model_name: str | None = None) -> None:
+        """Eagerly load the whisper model so the first transcription has no delay.
+
+        Safe to call from a thread pool executor (blocking I/O).
+        """
+        self._load_model(model_name or default_model())
+
     def _load_model(self, model_name: str) -> None:
         if model_name not in _VALID_MODELS:
             raise STTError(

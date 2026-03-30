@@ -27,7 +27,7 @@ Built over several months of daily use. 1,577 source files. 288 agent definition
 | **Autonomous Operation** | 5 background agents run every 30 minutes: learning, memory consolidation, message polling, code indexing, outreach. |
 | **Semantic Code Search** | LEANN indexes your entire codebase with HNSW vectors. Find code by meaning, not just keywords. |
 | **Runtime Tool Creation** | Tool Factory MCP server lets agents create Python tools on the fly, sandboxed with process group isolation. |
-| **Voice I/O** | Push-to-talk STT via faster-whisper (Apple Silicon optimised). TTS via macOS `say`. 4 MCP tools: `voice_listen`, `voice_speak`, `voice_stop`, `voice_status`. |
+| **Voice I/O** | Push-to-talk STT via faster-whisper (Apple Silicon optimised). TTS via macOS `say`. 4 MCP tools: `voice_listen`, `voice_speak`, `voice_stop`, `voice_status`. Standalone push-to-talk daemon (hotkey → record → transcribe → inject into focused window). Default hotkey: `ctrl+shift+space`. |
 | **Proactive Monitor** | Singleton daemon tracks PIDs, log files, and directories. Notifies via MCP when processes exit, logs spike errors, or directories change. |
 | **Workspace Awareness** | Multi-repo manifest. Git hooks fire on branch switch and merge — branch context stored in MemoryGraph automatically. |
 | **Self-Benchmarking** | Weekly EWMA regression detection. 5 scorer types. Circuit breaker pauses if quality drops >25%. 30 reference tasks. |
@@ -219,6 +219,60 @@ add_tool(
 ```
 
 Sandboxed: subprocess isolation, process group kill on timeout, environment variable stripping (no secrets), 30s timeout, 256MB memory limit. Max 20 active tools with TTL auto-expiry.
+
+### Push-to-Talk (`src/voice_mcp/push_to_talk.py`)
+
+Standalone daemon: hold a hotkey, speak, release — the transcription is typed into whatever window has focus.
+
+```
+Hold ctrl+shift+space → mic opens → release → Whisper transcribes → text injected
+```
+
+**Hotkey configuration** — create `~/.archon/ptt.json`:
+
+```json
+{
+  "hotkey": "ctrl+shift+space",
+  "model": "base.en",
+  "language": "en"
+}
+```
+
+| Key | Default | Options |
+|-----|---------|---------|
+| `hotkey` | `ctrl+shift+space` | Any combo of `ctrl`, `shift`, `alt`, `cmd` + a key |
+| `model` | `tiny.en` | `tiny.en`, `base.en`, `small.en`, `medium.en`, `large-v3` |
+| `language` | `en` | Any Whisper language code |
+
+**Script control:**
+
+```bash
+# Start the daemon (auto-detects Python, starts in background)
+bash scripts/archon/ptt-start.sh
+
+# Stop gracefully
+bash scripts/archon/ptt-stop.sh
+
+# Check status (shows state, uptime, transcription count)
+bash scripts/archon/ptt-status.sh
+bash scripts/archon/ptt-status.sh --json
+```
+
+**Platform support:**
+
+| Platform | Hotkey backend | Text injection |
+|----------|---------------|----------------|
+| macOS | pynput | AppleScript keystroke (≤200 chars) or clipboard+Cmd+V |
+| X11 Linux | pynput | xdotool type |
+| Wayland Linux | evdev (root/input group) | ydotool → dotool → wl-copy fallback |
+
+**Auto-start**: The setup script installs `com.archon.push-to-talk` as a launchd agent (macOS) or systemd user service (Linux). It starts automatically on login.
+
+**Logs:**
+- macOS: `~/Library/Logs/archon/push-to-talk.log`
+- Linux: `~/.local/share/archon/logs/push-to-talk.log`
+
+**Wayland note**: `evdev` requires read access to `/dev/input/*`. Either run as root (not recommended) or add your user to the `input` group: `sudo usermod -aG input $USER` and re-login.
 
 ### Embedding API (`embedding-api/`)
 
