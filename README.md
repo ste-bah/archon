@@ -287,6 +287,10 @@ The embedding API auto-detects which backend to use from these environment varia
 | **tool-factory** | Project | stdio | Dynamic Python tool creation with subprocess sandbox. |
 | **lancedb-memory** | Project | stdio | Vector memory for dual-store (MemoryGraph + LanceDB). |
 | **perplexity** | Project | stdio | Web search for research, learning, and analysis agents. |
+| **rocketchat** | User | stdio | Send/receive messages, read channels, DM users. For autonomous outreach + check-messages. Install from [ste-bah/rocketchat-mcp](https://github.com/ste-bah/rocketchat-mcp). |
+| **video-analyzer** | User | stdio | YouTube video analysis via Google Gemini — analyze, summarize, extract knowledge, search, transcribe. Install from [ste-bah/video-analyzer-mcp](https://github.com/ste-bah/video-analyzer-mcp). |
+
+Setup auto-detects `rocketchat-mcp` and `video-analyzer-mcp` if cloned alongside the project and registers them via `claude mcp add`.
 
 ---
 
