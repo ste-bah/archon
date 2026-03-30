@@ -498,6 +498,27 @@ else
     echo -e "${YELLOW}  Install from: https://github.com/ste-bah/rocketchat-mcp${NC}"
 fi
 
+# Video Analyzer MCP (YouTube analysis via Google Gemini)
+VA_PATH=""
+[ -d "$HOME/projects/video-analyzer-mcp" ] && VA_PATH="$HOME/projects/video-analyzer-mcp"
+[ -d "$PROJECT_DIR/../video-analyzer-mcp" ] && VA_PATH="$PROJECT_DIR/../video-analyzer-mcp"
+
+if [ -n "$VA_PATH" ]; then
+    echo -e "${GREEN}  Found Video Analyzer MCP at $VA_PATH${NC}"
+    # Auto-register if not already registered
+    if ! claude mcp list 2>/dev/null | grep -q "video-analyzer"; then
+        claude mcp add video-analyzer -- npx tsx "$VA_PATH/src/server.ts" 2>/dev/null && \
+            echo -e "${GREEN}  Registered video-analyzer MCP${NC}" || \
+            echo -e "${YELLOW}  Register manually: claude mcp add video-analyzer -- npx tsx $VA_PATH/src/server.ts${NC}"
+    else
+        echo -e "${GREEN}  video-analyzer already registered${NC}"
+    fi
+else
+    echo -e "${YELLOW}  Optional: Video Analyzer MCP not found${NC}"
+    echo -e "${YELLOW}  Install from: https://github.com/ste-bah/video-analyzer-mcp${NC}"
+    echo -e "${YELLOW}  Then: claude mcp add video-analyzer -- npx tsx /path/to/video-analyzer-mcp/src/server.ts${NC}"
+fi
+
 #===============================================================================
 # STEP 9: Configure .serena/project.yml
 #===============================================================================
