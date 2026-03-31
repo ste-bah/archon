@@ -9,10 +9,16 @@ FAILED=0
 _register() {
     local name="$1"; shift
     echo -n "  ${name}... "
-    if claude mcp add "${name}" -- "$@" 2>/dev/null; then
+    local out
+    out=$(claude mcp add "${name}" -- "$@" 2>&1)
+    local rc=$?
+    if [ $rc -eq 0 ]; then
         echo "OK"
+    elif echo "$out" | grep -qi "already exists"; then
+        echo "OK (already registered)"
     else
         echo "FAILED"
+        echo "    Error: $out"
         echo "    Run manually: claude mcp add ${name} -- $*"
         FAILED=$((FAILED + 1))
     fi
