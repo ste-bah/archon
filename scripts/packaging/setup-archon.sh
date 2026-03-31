@@ -592,22 +592,13 @@ EOF
 
 echo -e "${GREEN}  Serena project configured${NC}"
 
-# Ensure ~/.serena/serena_config.yml exists and has this project registered.
-# Serena loads ALL registered projects on startup — if any has a broken project.yml
-# it crashes with KeyError: 'language'. We write a minimal valid config to avoid that.
+# Always overwrite ~/.serena/serena_config.yml with a clean config containing only
+# this project. Serena loads ALL registered projects on startup — stale entries with
+# broken project.yml files (missing 'language:') crash serena with KeyError: 'language'.
 SERENA_USER_CONFIG="$HOME/.serena/serena_config.yml"
 mkdir -p "$HOME/.serena"
-if [ ! -f "$SERENA_USER_CONFIG" ]; then
-    # No config yet — write a minimal one with our project registered
-    printf "gui_log_window: false\nweb_dashboard: false\nweb_dashboard_open_on_launch: false\nlog_level: 20\nprojects:\n- %s\n" "$PROJECT_DIR" > "$SERENA_USER_CONFIG"
-    echo -e "${GREEN}  Created ~/.serena/serena_config.yml${NC}"
-else
-    # Config exists — add our project if not already there
-    if ! grep -qF "$PROJECT_DIR" "$SERENA_USER_CONFIG"; then
-        printf "\n- %s\n" "$PROJECT_DIR" >> "$SERENA_USER_CONFIG"
-        echo -e "${GREEN}  Registered project in ~/.serena/serena_config.yml${NC}"
-    fi
-fi
+printf "gui_log_window: false\nweb_dashboard: false\nweb_dashboard_open_on_launch: false\nlog_level: 20\nprojects:\n- %s\n" "$PROJECT_DIR" > "$SERENA_USER_CONFIG"
+echo -e "${GREEN}  Wrote clean ~/.serena/serena_config.yml (project: $PROJECT_DIR)${NC}"
 
 #===============================================================================
 # STEP 10: Create Runtime Directories
