@@ -1,0 +1,15 @@
+[Unit]
+Description=Archon RocketChat Pre-filter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=__ARCHON_HOME__
+Environment=HOME=__ARCHON_HOME__
+Environment=ARCHON_PROJECT_ROOT=__ARCHON_ROOT__
+Environment=PATH=__ARCHON_HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/bin/bash __ARCHON_HOME__/.archon/scripts/rc-prefilter.sh
+StandardOutput=append:__ARCHON_HOME__/.archon/logs/systemd-rc-prefilter-stdout.log
+StandardError=append:__ARCHON_HOME__/.archon/logs/systemd-rc-prefilter-stderr.log
+Nice=10

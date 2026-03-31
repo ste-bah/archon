@@ -1,0 +1,13 @@
+[Unit]
+Description=Archon Outreach Alerts
+
+[Service]
+Type=oneshot
+WorkingDirectory=__ARCHON_HOME__
+Environment=HOME=__ARCHON_HOME__
+Environment=ARCHON_PROJECT_ROOT=__ARCHON_ROOT__
+Environment=PATH=__ARCHON_HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/bin/bash __ARCHON_HOME__/.archon/scripts/archon-runner.sh outreach
+StandardOutput=append:__ARCHON_HOME__/.archon/logs/systemd-outreach-stdout.log
+StandardError=append:__ARCHON_HOME__/.archon/logs/systemd-outreach-stderr.log
+Nice=15

@@ -1,0 +1,10 @@
+[Unit]
+Description=Archon Learning Agent Timer (every 4 hours)
+
+[Timer]
+OnBootSec=1h
+OnUnitActiveSec=4h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
