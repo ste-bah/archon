@@ -26,7 +26,7 @@ NC='\033[0m'
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUTPUT_DIR="$PROJECT_DIR/archon-package"
 CREATE_TARBALL=false
-VERSION="2.2.11"
+VERSION="2.2.12"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do

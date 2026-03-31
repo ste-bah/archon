@@ -669,6 +669,14 @@ for f in "$PROJECT_DIR/.claude/commands"/god-*.md; do
     # Inject name: after opening --- so Claude Code registers it as a slash command
     awk -v n="$name" '/^---$/ && !done { print; print "name: " n; done=1; next } { print }' "$f" > "$dest"
 done
+
+# Patch settings.json: replace __PROJECT_DIR__ placeholder with actual project path
+SETTINGS_JSON="$PROJECT_DIR/.claude/settings.json"
+if [ -f "$SETTINGS_JSON" ]; then
+    sed -i.bak "s|__PROJECT_DIR__|$PROJECT_DIR|g" "$SETTINGS_JSON" && rm -f "$SETTINGS_JSON.bak"
+    echo -e "${GREEN}  settings.json patched with project path${NC}"
+fi
+
 echo -e "${GREEN}  Runtime directories created (incl .agentdb for GraphDB/SoNA, ~/.archon/ptt for push-to-talk)${NC}"
 echo -e "${GREEN}  god-* commands mirrored to .claude/skills/ for Claude Code 2.x compatibility${NC}"
 

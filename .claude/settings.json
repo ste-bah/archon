@@ -48,7 +48,7 @@
       "Bash(cat>/tmp/:*)",
       "Bash(cat:*)",
       "Write(/tmp/**)",
-      "Write(/Volumes/Externalwork/projects/claudeflow-testing/tmp/**)",
+      "Write(__PROJECT_DIR__/tmp/**)",
       "Bash(which:*)",
       "Bash(pwd)",
       "Bash(ls:*)",
@@ -443,7 +443,7 @@
       "packages/validator/"
     ]
   },
-  "includeCoAuthoredBy": true,
+  "includeCoAuthoredBy": false,
   "enabledMcpjsonServers": [
     "serena",
     "memorygraph",
