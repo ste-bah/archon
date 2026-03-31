@@ -415,8 +415,8 @@ if [ -d "$EMBED_DIR" ]; then
         if [ ! -x "$EMBED_PIP" ]; then
             EMBED_PIP="pip"
         fi
-        echo "  Installing core API deps (fastapi, uvicorn, chromadb)..."
-        "$EMBED_PIP" install fastapi uvicorn pydantic chromadb 2>&1 | tail -2
+        echo "  Installing core API deps (fastapi, uvicorn, chromadb, tiktoken)..."
+        "$EMBED_PIP" install fastapi uvicorn pydantic chromadb tiktoken 2>&1 | tail -2
         echo "  Installing ML deps (torch, transformers — may take several minutes)..."
         "$EMBED_PIP" install torch transformers sentence-transformers 2>&1 | tail -2 || \
             echo -e "${YELLOW}  Warning: ML packages failed — local embedding disabled, OpenAI fallback available${NC}"
