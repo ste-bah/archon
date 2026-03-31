@@ -104,3 +104,4 @@ embedding-api/__pycache__/
 
 # Agent version snapshots — backups from evolution (can be large)
 .claude/agents/versions/
+archon-v*.tar.gz
