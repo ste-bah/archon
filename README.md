@@ -46,11 +46,22 @@ cd archon
 
 If Claude Code isn't authenticated yet, `install.sh` will pause and prompt you to authenticate, then complete MCP registration automatically.
 
-Once setup finishes:
+Once setup finishes, start the background services:
 
 ```bash
-claude
+# 1. Start the god-agent daemons (memory server, core daemon, pipeline daemon)
+bash scripts/god-agent-start.sh
 
+# 2. Start the embedding service (ChromaDB + embedding API)
+./embedding-api/api-embed.sh start
+
+# 3. Start Claude
+claude
+```
+
+> **Note:** The daemons and embedding service are not auto-started after a reboot or fresh terminal. Re-run steps 1 and 2 each time you restart your machine or want to resume Archon.
+
+```bash
 # Test it
 /god-status
 /create-agent "code reviewer specializing in Python security"
