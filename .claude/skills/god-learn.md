@@ -1,4 +1,5 @@
 ---
+name: god-learn
 description: Store knowledge directly in the Universal Self-Learning God Agent
 ---
 

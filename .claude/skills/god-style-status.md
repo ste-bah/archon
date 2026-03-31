@@ -1,4 +1,5 @@
 ---
+name: god-style-status
 description: Show God Agent style profile status and available profiles
 ---
 

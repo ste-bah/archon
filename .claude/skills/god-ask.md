@@ -1,4 +1,5 @@
 ---
+name: god-ask
 description: Ask the Universal Self-Learning God Agent anything with DAI-001 agent selection
 ---
 

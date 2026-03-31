@@ -1,4 +1,5 @@
 ---
+name: god-market-analysis
 description: Analyze market tickers using the Universal Self-Learning God Agent with DAI-001 agent selection (analyze, scan, compare)
 ---
 

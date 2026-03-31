@@ -1,4 +1,5 @@
 ---
+name: god-research
 description: Deep research using the PhD Pipeline CLI with 45 specialized agents and DESC episodic memory
 effort: high
 ---

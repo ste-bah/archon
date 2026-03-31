@@ -1,4 +1,5 @@
 ---
+name: god-write
 description: Generate documents/papers using the Universal Self-Learning God Agent with DAI-001 agent selection
 ---
 

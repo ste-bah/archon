@@ -1,4 +1,5 @@
 ---
+name: god-code-sdk
 description: Generate code using the 48-Agent SDK Pipeline Runner (Agent SDK-based, crash-recoverable)
 effort: high
 ---

@@ -1,4 +1,5 @@
 ---
+name: god-learn-style
 description: Learn a writing style from PDF documents for the God Agent
 ---
 

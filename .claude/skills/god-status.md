@@ -1,4 +1,5 @@
 ---
+name: god-status
 description: Show Universal Self-Learning God Agent status and learning statistics
 ---
 

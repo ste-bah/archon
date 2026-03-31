@@ -1,4 +1,5 @@
 ---
+name: god-feedback
 description: Provide feedback for a God Agent trajectory to improve learning
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: god-code
 description: Generate code using the 48-Agent Coding Pipeline with stateful orchestration (ALWAYS uses full pipeline)
 effort: high
 ---
