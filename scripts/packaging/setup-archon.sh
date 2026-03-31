@@ -341,16 +341,20 @@ MGEOF
     mkdir -p "$HOME/.memorygraph"
     chmod 700 "$HOME/.memorygraph"
 
-    # Step 6e: Register with Claude Code as user-level MCP server
-    echo "  Registering MemoryGraph with Claude Code..."
-    claude mcp add memorygraph -- "$MEMORYGRAPH_VENV/run.sh" --profile extended --backend falkordblite 2>/dev/null || \
-        echo -e "${YELLOW}  Warning: Could not register via 'claude mcp add' (Claude Code may not be authenticated yet)${NC}"
+    # Step 6e: Deploy register-mcp.sh so it can be re-run after auth if needed
+    mkdir -p "$HOME/.archon/scripts"
+    REGISTER_MCP_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/../archon" 2>/dev/null && pwd)/register-mcp.sh"
+    if [ -f "$REGISTER_MCP_SRC" ]; then
+        cp "$REGISTER_MCP_SRC" "$HOME/.archon/scripts/register-mcp.sh"
+        chmod +x "$HOME/.archon/scripts/register-mcp.sh"
+    fi
 
-    # Step 6f: Verify
-    if claude mcp list 2>/dev/null | grep -q memorygraph; then
-        echo -e "${GREEN}  MemoryGraph registered and ready${NC}"
+    # Step 6f: Register immediately
+    echo "  Registering MemoryGraph with Claude Code..."
+    if claude mcp add memorygraph -- "$MEMORYGRAPH_VENV/run.sh" --profile extended --backend falkordblite 2>/dev/null; then
+        echo -e "${GREEN}  MemoryGraph registered${NC}"
     else
-        echo -e "${YELLOW}  MemoryGraph installed but not yet registered (run 'claude mcp add memorygraph -- $MEMORYGRAPH_VENV/run.sh --profile extended --backend falkordblite' after authenticating Claude Code)${NC}"
+        echo -e "${YELLOW}  Registration deferred (will retry at end of setup)${NC}"
     fi
 
     echo -e "${GREEN}  MemoryGraph ready at $MEMORYGRAPH_VENV${NC}"
@@ -967,10 +971,32 @@ else
     echo -e "${YELLOW}  Failed checks may resolve after starting services (embedding API, ChromaDB)${NC}"
 fi
 
-# Show MCP server list (informational, not a pass/fail gate)
+# Final MCP registration — retry now that all components are installed
 echo ""
-echo "MCP server registrations (informational):"
-claude mcp list 2>/dev/null | grep -E "memorygraph|serena|leann|tool-factory|perplexity|archon-monitor|voice-mcp|Connected|Failed" || echo "  (Run 'claude' to authenticate and verify MCP servers)"
+echo -e "${YELLOW}Registering MCP servers (final attempt)...${NC}"
+if [ -x "$HOME/.archon/scripts/register-mcp.sh" ]; then
+    if bash "$HOME/.archon/scripts/register-mcp.sh"; then
+        echo -e "${GREEN}  All MCP servers registered${NC}"
+    else
+        echo -e "${RED}  ================================================================${NC}"
+        echo -e "${RED}  ACTION REQUIRED: MCP registration failed${NC}"
+        echo -e "${RED}  ================================================================${NC}"
+        echo -e "${RED}  Claude Code was not authenticated during setup.${NC}"
+        echo -e "${RED}  Run this ONE command after authenticating:${NC}"
+        echo -e "${RED}${NC}"
+        echo -e "${RED}    bash ~/.archon/scripts/register-mcp.sh${NC}"
+        echo -e "${RED}${NC}"
+        echo -e "${RED}  This registers MemoryGraph so it auto-starts with Claude.${NC}"
+        echo -e "${RED}  ================================================================${NC}"
+    fi
+else
+    echo -e "${YELLOW}  register-mcp.sh not found — skipping${NC}"
+fi
+
+# Show current MCP server list
+echo ""
+echo "MCP server registrations:"
+claude mcp list 2>/dev/null | grep -E "memorygraph|serena|leann|tool-factory|perplexity|archon-monitor|voice-mcp|Connected|Failed" || echo "  (run 'claude' to authenticate and verify)"
 
 # LEANN note
 echo ""
