@@ -1,5 +1,5 @@
 #!/bin/bash
-# Install Archon autonomous agents (macOS launchd or Linux systemd --user)
+# Install Archon autonomous agents (macOS launchd or Linux/WSL systemd --user)
 # PRD: PRD-ARCHON-CAP-001 | TASK-AUTO-004, TASK-ENH-001, TASK-ENH-002
 
 set -euo pipefail
@@ -9,6 +9,12 @@ PLATFORM="$(uname)"
 
 # Derive project root (two levels up from scripts/archon/)
 ARCHON_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+
+# Detect WSL
+IS_WSL=false
+if [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then
+    IS_WSL=true
+fi
 
 # Verify prerequisites
 if [ ! -f "${HOME}/.archon-env" ]; then
@@ -68,8 +74,35 @@ if [[ "$PLATFORM" == "Darwin" ]]; then
         echo "  OK: ${desc}"
     done
 
-# ── Linux ─────────────────────────────────────────────────────────────────────
+# ── Linux / WSL ───────────────────────────────────────────────────────────────
 else
+    # WSL: verify systemd is actually running before proceeding
+    if [[ "$IS_WSL" == "true" ]]; then
+        echo "Detected WSL environment."
+        if ! systemctl is-system-running &>/dev/null; then
+            echo ""
+            echo "ERROR: systemd is not running in this WSL instance." >&2
+            echo "" >&2
+            echo "To enable systemd on WSL2, add the following to /etc/wsl.conf:" >&2
+            echo "" >&2
+            echo "  [boot]" >&2
+            echo "  systemd=true" >&2
+            echo "" >&2
+            echo "Then restart WSL from PowerShell:" >&2
+            echo "  wsl --shutdown" >&2
+            echo "" >&2
+            echo "NOTE: WSL1 does not support systemd. Upgrade to WSL2:" >&2
+            echo "  wsl --set-version <distro> 2" >&2
+            exit 1
+        fi
+        echo "systemd is running — continuing with systemd install."
+        echo ""
+        echo "WARNING: Archon timers only fire while WSL is running." >&2
+        echo "  They will NOT run in the background after you close all WSL windows." >&2
+        echo "  For true background operation, use native Linux." >&2
+        echo ""
+    fi
+
     SYSTEMD_USER_DIR="${HOME}/.config/systemd/user"
     mkdir -p "$SYSTEMD_USER_DIR"
 
@@ -116,11 +149,13 @@ else
         fi
     done
 
-    # Ensure services persist after logout
-    if ! loginctl show-user "$(whoami)" 2>/dev/null | grep -q "Linger=yes"; then
-        echo ""
-        echo "NOTE: To keep timers running when you log out, run:"
-        echo "  loginctl enable-linger $(whoami)"
+    # Linger: keep user services alive after logout (not applicable on WSL)
+    if [[ "$IS_WSL" == "false" ]]; then
+        if ! loginctl show-user "$(whoami)" 2>/dev/null | grep -q "Linger=yes"; then
+            echo ""
+            echo "NOTE: To keep timers running when you log out, run:"
+            echo "  loginctl enable-linger $(whoami)"
+        fi
     fi
 fi
 
