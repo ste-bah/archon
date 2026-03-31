@@ -444,6 +444,29 @@ else
 fi
 
 #===============================================================================
+# STEP 7c: Video Analyzer MCP
+#===============================================================================
+echo -e "${YELLOW}[7c/${TOTAL_STEPS}] Setting up Video Analyzer MCP...${NC}"
+
+VIDEO_ANALYZER_DIR="$HOME/.archon/video-analyzer-mcp"
+if [ ! -d "$VIDEO_ANALYZER_DIR" ]; then
+    echo "  Cloning video-analyzer-mcp..."
+    git clone https://github.com/ste-bah/video-analyzer-mcp "$VIDEO_ANALYZER_DIR" 2>&1 | tail -2
+else
+    echo "  Updating video-analyzer-mcp..."
+    git -C "$VIDEO_ANALYZER_DIR" pull --quiet 2>/dev/null || true
+fi
+
+if [ -f "$VIDEO_ANALYZER_DIR/package.json" ]; then
+    echo "  Installing dependencies..."
+    (cd "$VIDEO_ANALYZER_DIR" && npm install --quiet 2>&1 | tail -2)
+    echo -e "${GREEN}  Video Analyzer MCP ready at $VIDEO_ANALYZER_DIR${NC}"
+    echo -e "${YELLOW}  Requires GOOGLE_API_KEY env var (set in ~/.archon-env)${NC}"
+else
+    echo -e "${RED}  Warning: video-analyzer-mcp clone failed${NC}"
+fi
+
+#===============================================================================
 # STEP 8: Configure .mcp.json (Project-Level MCP Servers)
 #===============================================================================
 echo -e "${YELLOW}[8/${TOTAL_STEPS}] Configuring project-level MCP servers...${NC}"
@@ -518,12 +541,22 @@ cat > "$MCP_JSON" << EOF
       "command": "$HOME/.venv/bin/python3",
       "args": ["-m", "src.voice_mcp"],
       "type": "stdio"
+    },
+    "video-analyzer": {
+      "command": "${NPX_CMD}",
+      "args": ["tsx", "src/server.ts"],
+      "type": "stdio",
+      "cwd": "${HOME}/.archon/video-analyzer-mcp",
+      "env": {
+        "GOOGLE_API_KEY": "\${GOOGLE_API_KEY}",
+        "PATH": "${NODE_BIN_DIR}:\${PATH}"
+      }
     }
   }
 }
 EOF
 
-echo -e "${GREEN}  .mcp.json configured (serena, leann-search, tool-factory, lancedb-memory, perplexity, archon-monitor, voice-mcp)${NC}"
+echo -e "${GREEN}  .mcp.json configured (serena, leann-search, tool-factory, lancedb-memory, perplexity, archon-monitor, voice-mcp, video-analyzer)${NC}"
 echo -e "${GREEN}  Note: memorygraph is registered at user level (Step 6)${NC}"
 
 # Optional: RocketChat MCP (for autonomous messaging — needs separate repo)
@@ -682,6 +715,12 @@ RC_URL="http://your-rocketchat-host:port"
 RC_USER_ID=""
 RC_TOKEN=""
 RC_TOKEN_ID=""
+
+# Video Analyzer MCP (required for video analysis tools)
+GOOGLE_API_KEY=""
+
+# Perplexity MCP (required for web search tools)
+PERPLEXITY_API_KEY=""
 ENVEOF
         chmod 600 "$HOME/.archon-env"
         echo -e "${YELLOW}  Created ~/.archon-env template -- fill in RocketChat credentials${NC}"
@@ -963,10 +1002,10 @@ else
     echo -e "${YELLOW}SKIP (no seeds file)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
 fi
 
-# 8. .mcp.json has all 7 servers
+# 8. .mcp.json has all 8 servers
 echo -n "  [8/$VERIFY_TOTAL] MCP server config... "
 MCP_SERVER_COUNT=$($PYTHON_CMD -c "import json; print(len(json.load(open('$PROJECT_DIR/.mcp.json')).get('mcpServers',{})))" 2>/dev/null || echo "0")
-if [ "$MCP_SERVER_COUNT" -ge 7 ]; then
+if [ "$MCP_SERVER_COUNT" -ge 8 ]; then
     echo -e "${GREEN}PASS ($MCP_SERVER_COUNT servers configured)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
 else
     echo -e "${RED}FAIL (expected 7, got $MCP_SERVER_COUNT)${NC}"; VERIFY_FAIL=$((VERIFY_FAIL + 1))
