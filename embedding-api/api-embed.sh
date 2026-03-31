@@ -91,6 +91,10 @@ start_services() {
         if [ -f "$CHROMA_PID" ] && kill -0 $(cat "$CHROMA_PID") 2>/dev/null; then
             echo -e "${GREEN}ChromaDB already running (PID: $(cat $CHROMA_PID))${NC}"
         else
+            # Kill anything holding port 8001 (stale process, previous failed start)
+            lsof -ti:8001 2>/dev/null | xargs kill -9 2>/dev/null || true
+            fuser -k 8001/tcp 2>/dev/null || true
+            rm -f "$CHROMA_PID"
             echo "Starting ChromaDB on port 8001..."
             nohup "$VENV_BIN/chroma" run --path "$DB_DIR" --port 8001 --host 127.0.0.1 > "$CHROMA_LOG" 2>&1 &
             echo $! > "$CHROMA_PID"
