@@ -328,7 +328,7 @@ if [ "$SKIP_MEMORYGRAPH" = false ]; then
     # Step 6c: Install from cloned source (editable mode)
     echo "  Installing MemoryGraph from fork (editable)..."
     "$MEMORYGRAPH_VENV/bin/pip" install --upgrade pip setuptools wheel
-    "$MEMORYGRAPH_VENV/bin/pip" install -e "$MEMORYGRAPH_SRC"
+    "$MEMORYGRAPH_VENV/bin/pip" install -e "$MEMORYGRAPH_SRC[falkordblite]" 2>&1 | tail -3
 
     # Step 6d: Create/update run.sh wrapper
     cat > "$MEMORYGRAPH_VENV/run.sh" << MGEOF
@@ -914,10 +914,18 @@ else
     echo -e "${RED}FAIL${NC}"; VERIFY_FAIL=$((VERIFY_FAIL + 1))
 fi
 
-# 5. MemoryGraph is reachable
-echo -n "  [5/$VERIFY_TOTAL] MemoryGraph MCP... "
+# 5. MemoryGraph starts and responds to JSON-RPC
+echo -n "  [5/$VERIFY_TOTAL] MemoryGraph MCP (JSON-RPC)... "
 if [ -x "$HOME/.memorygraph-venv/run.sh" ]; then
-    echo -e "${GREEN}PASS (installed)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
+    _MG_RESP=$(echo '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke-test","version":"1.0"}},"id":1}' \
+        | timeout 10 "$HOME/.memorygraph-venv/run.sh" --profile extended --backend falkordblite 2>/dev/null | head -1)
+    if echo "$_MG_RESP" | grep -q '"id":1'; then
+        echo -e "${GREEN}PASS (JSON-RPC response received)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
+    else
+        echo -e "${RED}FAIL (server started but no JSON-RPC response)${NC}"
+        echo -e "${RED}  Run manually to diagnose: $HOME/.memorygraph-venv/run.sh --profile extended --backend falkordblite${NC}"
+        VERIFY_FAIL=$((VERIFY_FAIL + 1))
+    fi
 else
     echo -e "${RED}FAIL (run.sh not found)${NC}"; VERIFY_FAIL=$((VERIFY_FAIL + 1))
 fi
@@ -933,7 +941,7 @@ fi
 # 7. Seeds imported
 echo -n "  [7/$VERIFY_TOTAL] Archon seed memories... "
 if [ -f "$PROJECT_DIR/seeds/memorygraph-seeds.json" ]; then
-    SEED_COUNT=$(python3 -c "import json; print(len(json.load(open('$PROJECT_DIR/seeds/memorygraph-seeds.json')).get('memories',[])))" 2>/dev/null || echo "0")
+    SEED_COUNT=$($PYTHON_CMD -c "import json; print(len(json.load(open('$PROJECT_DIR/seeds/memorygraph-seeds.json')).get('memories',[])))" 2>/dev/null || echo "0")
     echo -e "${GREEN}PASS ($SEED_COUNT seeds)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
 else
     echo -e "${YELLOW}SKIP (no seeds file)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
@@ -941,7 +949,7 @@ fi
 
 # 8. .mcp.json has all 7 servers
 echo -n "  [8/$VERIFY_TOTAL] MCP server config... "
-MCP_SERVER_COUNT=$(python3 -c "import json; print(len(json.load(open('$PROJECT_DIR/.mcp.json')).get('mcpServers',{})))" 2>/dev/null || echo "0")
+MCP_SERVER_COUNT=$($PYTHON_CMD -c "import json; print(len(json.load(open('$PROJECT_DIR/.mcp.json')).get('mcpServers',{})))" 2>/dev/null || echo "0")
 if [ "$MCP_SERVER_COUNT" -ge 7 ]; then
     echo -e "${GREEN}PASS ($MCP_SERVER_COUNT servers configured)${NC}"; VERIFY_PASS=$((VERIFY_PASS + 1))
 else
