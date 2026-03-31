@@ -256,6 +256,9 @@ if [ "$SKIP_SERENA" = false ]; then
 
     mkdir -p "$SERENA_DIR"
 
+    # Pre-create ~/.serena dirs so serena doesn't crash writing logs on a fresh install
+    mkdir -p "$HOME/.serena/logs" "$HOME/.serena/memories"
+
     if [ ! -d "$SERENA_VENV" ]; then
         echo "  Creating Serena virtual environment..."
         $PYTHON_CMD -m venv "$SERENA_VENV"
@@ -406,12 +409,18 @@ if [ -d "$EMBED_DIR" ]; then
         source "$VENV_DIR/bin/activate"
     fi
 
-    # Install embedding dependencies
+    # Install embedding dependencies — use explicit venv binary, not activation state
     if [ -f "$EMBED_DIR/requirements.txt" ]; then
-        echo "  Installing embedding API dependencies (this may take a while — includes torch/transformers)..."
-        pip install -r "$EMBED_DIR/requirements.txt" 2>&1 | tail -3
+        EMBED_PIP="$HOME/.venv/bin/pip"
+        if [ ! -x "$EMBED_PIP" ]; then
+            EMBED_PIP="pip"
+        fi
+        echo "  Installing core API deps (fastapi, uvicorn, chromadb)..."
+        "$EMBED_PIP" install fastapi uvicorn pydantic chromadb 2>&1 | tail -2
+        echo "  Installing ML deps (torch, transformers — may take several minutes)..."
+        "$EMBED_PIP" install torch transformers sentence-transformers 2>&1 | tail -2 || \
+            echo -e "${YELLOW}  Warning: ML packages failed — local embedding disabled, OpenAI fallback available${NC}"
         echo -e "${GREEN}  Embedding API dependencies installed${NC}"
-        echo -e "${GREEN}  Includes: chromadb (local vector DB), torch, transformers, sentence-transformers${NC}"
     fi
 
     # Make the launcher executable
@@ -583,6 +592,23 @@ EOF
 
 echo -e "${GREEN}  Serena project configured${NC}"
 
+# Ensure ~/.serena/serena_config.yml exists and has this project registered.
+# Serena loads ALL registered projects on startup — if any has a broken project.yml
+# it crashes with KeyError: 'language'. We write a minimal valid config to avoid that.
+SERENA_USER_CONFIG="$HOME/.serena/serena_config.yml"
+mkdir -p "$HOME/.serena"
+if [ ! -f "$SERENA_USER_CONFIG" ]; then
+    # No config yet — write a minimal one with our project registered
+    printf "gui_log_window: false\nweb_dashboard: false\nweb_dashboard_open_on_launch: false\nlog_level: 20\nprojects:\n- %s\n" "$PROJECT_DIR" > "$SERENA_USER_CONFIG"
+    echo -e "${GREEN}  Created ~/.serena/serena_config.yml${NC}"
+else
+    # Config exists — add our project if not already there
+    if ! grep -qF "$PROJECT_DIR" "$SERENA_USER_CONFIG"; then
+        printf "\n- %s\n" "$PROJECT_DIR" >> "$SERENA_USER_CONFIG"
+        echo -e "${GREEN}  Registered project in ~/.serena/serena_config.yml${NC}"
+    fi
+fi
+
 #===============================================================================
 # STEP 10: Create Runtime Directories
 #===============================================================================
@@ -614,22 +640,21 @@ echo -e "${YELLOW}[11/${TOTAL_STEPS}] Importing Archon seed data...${NC}"
 # behavioral rules, dev flow patterns. NO user-specific data.
 # On first Claude Code session, Archon will ask the new user who they are.
 
+# Always deploy personality.md first — this is how Claude knows it's Archon
+if [ -f "$PROJECT_DIR/seeds/personality.md" ]; then
+    mkdir -p "$HOME/.claude"
+    if [ -f "$HOME/.claude/personality.md" ]; then
+        BACKUP="$HOME/.claude/personality.md.backup-$(date +%Y%m%d-%H%M%S)"
+        cp "$HOME/.claude/personality.md" "$BACKUP"
+    fi
+    cp "$PROJECT_DIR/seeds/personality.md" "$HOME/.claude/personality.md"
+    echo -e "${GREEN}  Personality file installed to ~/.claude/personality.md${NC}"
+fi
+
 if [ -f "$PROJECT_DIR/scripts/archon/import-seeds.sh" ]; then
     ROOT="$PROJECT_DIR" bash "$PROJECT_DIR/scripts/archon/import-seeds.sh"
 else
     echo -e "${YELLOW}  No import-seeds.sh found — Archon will start without seeded memories${NC}"
-
-    # At minimum, copy personality.md if available in seeds/
-    if [ -f "$PROJECT_DIR/seeds/personality.md" ]; then
-        mkdir -p "$HOME/.claude"
-        if [ -f "$HOME/.claude/personality.md" ]; then
-            BACKUP="$HOME/.claude/personality.md.backup-$(date +%Y%m%d-%H%M%S)"
-            cp "$HOME/.claude/personality.md" "$BACKUP"
-            echo "  Backed up existing personality.md"
-        fi
-        cp "$PROJECT_DIR/seeds/personality.md" "$HOME/.claude/personality.md"
-        echo -e "${GREEN}  Personality file installed to ~/.claude/personality.md${NC}"
-    fi
 fi
 
 echo -e "${GREEN}  Note: Archon will onboard the new user on first session${NC}"
