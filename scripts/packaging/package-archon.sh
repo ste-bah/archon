@@ -26,7 +26,7 @@ NC='\033[0m'
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUTPUT_DIR="$PROJECT_DIR/archon-package"
 CREATE_TARBALL=false
-VERSION="2.2.10"
+VERSION="2.2.11"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -140,9 +140,12 @@ if [ -d "$PROJECT_DIR/.claude/skills" ]; then
     cp -r "$PROJECT_DIR/.claude/skills" "$OUTPUT_DIR/.claude/"
 fi
 mkdir -p "$OUTPUT_DIR/.claude/skills"
-# god-* commands live only in commands/ — mirror them into skills/ so /god-code etc. work
+# god-* commands live only in commands/ — mirror into skills/ as dir/SKILL.md (Linux requires directory format)
 for f in "$PROJECT_DIR/.claude/commands"/god-*.md; do
-    [ -f "$f" ] && cp "$f" "$OUTPUT_DIR/.claude/skills/"
+    [ -f "$f" ] || continue
+    name=$(basename "$f" .md)
+    mkdir -p "$OUTPUT_DIR/.claude/skills/$name"
+    awk -v n="$name" '/^---$/ && !done { print; print "name: " n; done=1; next } { print }' "$f" > "$OUTPUT_DIR/.claude/skills/$name/SKILL.md"
 done
 SKILLS_DIR_COUNT=$(find "$OUTPUT_DIR/.claude/skills" -maxdepth 1 -mindepth 1 | wc -l | tr -d ' ')
 
