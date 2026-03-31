@@ -10,7 +10,7 @@ Archon is a persistent intelligence layer for Claude Code. It gives your AI agen
 
 Built over several months of daily use. 1,577 source files. 288 agent definitions. 469+ automated tests. Every behavioral rule learned from a real mistake.
 
-**Version**: 2.1.5 | **Last Updated**: March 2026
+**Version**: 2.1.6 | **Last Updated**: March 2026
 
 ---
 
@@ -37,27 +37,25 @@ Built over several months of daily use. 1,577 source files. 288 agent definition
 ## Quick Start
 
 ```bash
-# 1. Clone and enter the project
 git clone https://github.com/ste-bah/archon.git
 cd archon
+./install.sh
+```
 
-# 2. Run the setup script
-chmod +x scripts/packaging/setup-archon.sh
-./scripts/packaging/setup-archon.sh
+`install.sh` installs everything: Node.js 22, Claude Code CLI, Python venvs, all MCP servers, background agents, seed memories. Takes 10–15 minutes on first run.
 
-# 3. Start the embedding server (local ChromaDB + embeddings)
-./embedding-api/api-embed.sh start
+If Claude Code isn't authenticated yet, `install.sh` will pause and prompt you to authenticate, then complete MCP registration automatically.
 
-# 4. Launch Claude Code
+Once setup finishes:
+
+```bash
 claude
 
-# 5. Test it
+# Test it
 /god-status
 /create-agent "code reviewer specializing in Python security"
 /run-agent code-reviewer "Review src/tool_factory/server.py"
 ```
-
-The setup script installs: Node.js 22, Claude Code CLI, Python 3.11+ venv, MemoryGraph (from fork), Serena, ChromaDB, embedding model, and all dependencies. Takes 10-15 minutes on first run.
 
 ---
 
@@ -391,27 +389,38 @@ Every non-trivial change follows this flow:
 
 ### Prerequisites
 
-- macOS (primary) or Linux
+- macOS or Linux (including WSL2 with `systemd=true`)
 - Python 3.11+
 - Git, curl
 
 ### Full Install
 
 ```bash
-./scripts/packaging/setup-archon.sh
+git clone https://github.com/ste-bah/archon.git
+cd archon
+./install.sh
 ```
 
-This installs everything: Node.js 22, Claude Code, 3 Python venvs, 6 MCP servers, ChromaDB, embedding model, launchd agents, seed memories.
+`install.sh` is the single entry point. It calls `scripts/packaging/setup-archon.sh` and handles MCP registration — including pausing for Claude authentication if needed.
 
 ### Flags
 
+Pass any `setup-archon.sh` flags directly to `install.sh`:
+
 ```bash
---skip-nvm             # Skip Node.js installation
---skip-python          # Skip Python venv setup
---skip-serena          # Skip Serena MCP (not recommended)
---skip-memorygraph     # Skip MemoryGraph fork install
---skip-archon-runner   # Skip autonomous background agents
---minimal              # Core components only
+./install.sh --skip-nvm             # Skip Node.js installation
+./install.sh --skip-python          # Skip Python venv setup
+./install.sh --skip-serena          # Skip Serena MCP (not recommended)
+./install.sh --skip-memorygraph     # Skip MemoryGraph fork install
+./install.sh --skip-archon-runner   # Skip autonomous background agents
+./install.sh --minimal              # Core components only
+```
+
+### If MCP registration failed after setup
+
+```bash
+claude                                      # authenticate first
+bash ~/.archon/scripts/register-mcp.sh     # then re-register
 ```
 
 ### Python Virtual Environments
