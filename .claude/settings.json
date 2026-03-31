@@ -447,7 +447,13 @@
   "enabledMcpjsonServers": [
     "serena",
     "memorygraph",
-    "lancedb-memory"
+    "lancedb-memory",
+    "leann-search",
+    "tool-factory",
+    "voice-mcp",
+    "archon-monitor",
+    "perplexity",
+    "video-analyzer"
   ],
   "statusLine": {
     "type": "command",
