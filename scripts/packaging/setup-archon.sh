@@ -442,7 +442,16 @@ echo -e "${YELLOW}[8/${TOTAL_STEPS}] Configuring project-level MCP servers...${N
 MCP_JSON="$PROJECT_DIR/.mcp.json"
 SERENA_VENV="$PROJECT_DIR/serena/.venv"
 
-# Create .mcp.json with 4 project-level servers
+# Resolve absolute path to npx so .mcp.json works without NVM in PATH
+# (Claude Code on Linux may start without .bashrc sourced)
+NPX_CMD=$(which npx 2>/dev/null || echo "npx")
+NODE_CMD=$(which node 2>/dev/null || echo "node")
+NODE_BIN_DIR=$(dirname "$NPX_CMD" 2>/dev/null || echo "")
+
+echo "  Using npx: $NPX_CMD"
+echo "  Using node: $NODE_CMD"
+
+# Create .mcp.json — use absolute npx path so Claude finds node regardless of shell init
 # Note: memorygraph is user-level (registered via 'claude mcp add' in Step 6)
 cat > "$MCP_JSON" << EOF
 {
@@ -457,15 +466,16 @@ cat > "$MCP_JSON" << EOF
       "type": "stdio",
       "env": {
         "VIRTUAL_ENV": "${SERENA_VENV}",
-        "PATH": "${SERENA_VENV}/bin:\${PATH}"
+        "PATH": "${SERENA_VENV}/bin:${NODE_BIN_DIR}:\${PATH}"
       }
     },
     "leann-search": {
-      "command": "npx",
+      "command": "${NPX_CMD}",
       "args": ["tsx", "src/mcp-servers/leann-search/proxy.ts"],
       "type": "stdio",
       "env": {
-        "MCP_TIMEOUT": "300000"
+        "MCP_TIMEOUT": "300000",
+        "PATH": "${NODE_BIN_DIR}:\${PATH}"
       }
     },
     "tool-factory": {
@@ -474,16 +484,20 @@ cat > "$MCP_JSON" << EOF
       "type": "stdio"
     },
     "lancedb-memory": {
-      "command": "npx",
+      "command": "${NPX_CMD}",
       "args": ["tsx", "src/mcp-servers/lancedb-memory/server.ts"],
-      "type": "stdio"
+      "type": "stdio",
+      "env": {
+        "PATH": "${NODE_BIN_DIR}:\${PATH}"
+      }
     },
     "perplexity": {
-      "command": "npx",
+      "command": "${NPX_CMD}",
       "args": ["-y", "@perplexity-ai/mcp-server"],
       "type": "stdio",
       "env": {
-        "PERPLEXITY_API_KEY": "\${PERPLEXITY_API_KEY}"
+        "PERPLEXITY_API_KEY": "\${PERPLEXITY_API_KEY}",
+        "PATH": "${NODE_BIN_DIR}:\${PATH}"
       }
     },
     "archon-monitor": {
@@ -547,13 +561,11 @@ echo -e "${YELLOW}[9/${TOTAL_STEPS}] Configuring Serena project settings...${NC}
 SERENA_CONFIG_DIR="$PROJECT_DIR/.serena"
 mkdir -p "$SERENA_CONFIG_DIR"
 
-# Only create if doesn't exist (preserve existing memories)
-if [ ! -f "$SERENA_CONFIG_DIR/project.yml" ]; then
-    cat > "$SERENA_CONFIG_DIR/project.yml" << EOF
+# Always overwrite project config (not memories — those are in .serena/memories/)
+# 'language' must be singular string — Serena config parser does data["language"].lower()
+cat > "$SERENA_CONFIG_DIR/project.yml" << EOF
 # Serena Project Configuration
-languages:
-  - python
-  - typescript
+language: python
 
 encoding: "utf-8"
 project_name: "$(basename $PROJECT_DIR)"
@@ -568,7 +580,6 @@ excluded_tools: []
 # Memory settings
 memory_enabled: true
 EOF
-fi
 
 echo -e "${GREEN}  Serena project configured${NC}"
 
