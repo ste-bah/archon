@@ -527,11 +527,8 @@ fi
 STEP=$((STEP + 1))
 echo -e "${YELLOW}[$STEP/$TOTAL_STEPS] Packaging Archon seed data...${NC}"
 
-# First, run the export script to generate fresh seeds from current MemoryGraph
-if [ -x "$PROJECT_DIR/scripts/archon/export-seeds.sh" ]; then
-    echo "  Running seed export..."
-    bash "$PROJECT_DIR/scripts/archon/export-seeds.sh" 2>/dev/null || true
-fi
+# Use the committed seeds file — do NOT export live MemoryGraph here as it contains user data.
+# To update seeds: sanitize manually, commit seeds/memorygraph-seeds.json, then rebuild package.
 
 # Copy seeds directory
 if [ -d "$PROJECT_DIR/seeds" ]; then
