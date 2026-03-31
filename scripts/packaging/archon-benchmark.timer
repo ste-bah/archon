@@ -1,0 +1,10 @@
+[Unit]
+Description=Archon Weekly Benchmark Timer
+Documentation=https://github.com/ste-bah/archon
+
+[Timer]
+OnCalendar=Sun *-*-* 02:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

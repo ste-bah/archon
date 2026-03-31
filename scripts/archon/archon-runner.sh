@@ -18,7 +18,7 @@ TASK_TYPE="${1:?Usage: archon-runner.sh <check-messages|learn|consolidate>}"
 LOCK_DIR="/tmp/archon-autonomous.lock"
 BUDGET_DIR="${HOME}/.archon/budget"
 LOG_DIR="${HOME}/.archon/logs"
-LOG_FILE="${PROJECT_ROOT}/.persistent-memory/autonomous-runs.jsonl"
+LOG_FILE="${HOME}/.archon/logs/autonomous-runs.jsonl"
 SYSTEM_PROMPT_FILE="${SCRIPT_DIR}/system-prompt.md"
 RUN_ID="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 TODAY=$(date +%Y-%m-%d)
@@ -262,7 +262,7 @@ RESULT=$(claude -p "${PROMPT}" \
     --append-system-prompt "AUTONOMOUS RUN: run_id=${RUN_ID}. Tag any MemoryGraph entries with context: {\"autonomous_run_id\": \"${RUN_ID}\"}." \
     2>"$STDERR_LOG")
 EXIT_CODE=$?
-cd "$PROJECT_ROOT"
+cd /tmp
 
 END_S=$(date +%s)
 DURATION=$(( (END_S - START_S) * 1000 ))
@@ -313,7 +313,7 @@ reset_failure_count
 # POST-SUCCESS: Extract archive staging data (consolidate task only)
 # =========================================================================
 if [ "$TASK_TYPE" = "consolidate" ]; then
-    STAGING_FILE="${PROJECT_ROOT}/.persistent-memory/archive-staging.jsonl"
+    STAGING_FILE="${HOME}/.archon/logs/archive-staging.jsonl"
     FULL_TEXT=$(echo "$RESULT" | jq -r '.result // ""')
 
     # Extract lines between the staging markers

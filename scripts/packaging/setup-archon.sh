@@ -685,19 +685,43 @@ fi
 #===============================================================================
 echo -e "${YELLOW}[12c/${TOTAL_STEPS}] Installing benchmark schedule...${NC}"
 
-BENCHMARK_PLIST_SRC="$PROJECT_DIR/scripts/packaging/com.archon.benchmark.plist"
-BENCHMARK_PLIST_DST="$HOME/Library/LaunchAgents/com.archon.benchmark.plist"
+mkdir -p "$HOME/.archon/logs"
+mkdir -p "$HOME/.archon/benchmark"
 
-if [ -f "$BENCHMARK_PLIST_SRC" ]; then
-    mkdir -p "$HOME/.archon/logs"
-    mkdir -p "$HOME/.archon/benchmark"
-    cp "$BENCHMARK_PLIST_SRC" "$BENCHMARK_PLIST_DST"
-    launchctl bootstrap "gui/$(id -u)" "$BENCHMARK_PLIST_DST" 2>/dev/null || true
-    echo -e "${GREEN}  Benchmark schedule installed (weekly Sunday 02:00)${NC}"
-    echo -e "${GREEN}  Config: ~/.archon/benchmark/config.json (auto-created on first run)${NC}"
+if [[ "$(uname)" == "Darwin" ]]; then
+    BENCHMARK_PLIST_SRC="$PROJECT_DIR/scripts/packaging/com.archon.benchmark.plist"
+    BENCHMARK_PLIST_DST="$HOME/Library/LaunchAgents/com.archon.benchmark.plist"
+    if [ -f "$BENCHMARK_PLIST_SRC" ]; then
+        sed \
+            -e "s|__PYTHON3__|$PYTHON_CMD|g" \
+            -e "s|__ARCHON_ROOT__|$PROJECT_DIR|g" \
+            -e "s|__ARCHON_HOME__|$HOME/.archon|g" \
+            "$BENCHMARK_PLIST_SRC" > "$BENCHMARK_PLIST_DST"
+        launchctl bootstrap "gui/$(id -u)" "$BENCHMARK_PLIST_DST" 2>/dev/null || true
+        echo -e "${GREEN}  Benchmark schedule installed (weekly Sunday 02:00, launchd)${NC}"
+    else
+        echo -e "${YELLOW}  Skipped: benchmark plist not found${NC}"
+    fi
 else
-    echo -e "${YELLOW}  Skipped: benchmark plist not found${NC}"
+    BENCHMARK_SERVICE_SRC="$PROJECT_DIR/scripts/packaging/archon-benchmark.service"
+    BENCHMARK_TIMER_SRC="$PROJECT_DIR/scripts/packaging/archon-benchmark.timer"
+    SYSTEMD_DIR="$HOME/.config/systemd/user"
+    if [ -f "$BENCHMARK_SERVICE_SRC" ] && [ -f "$BENCHMARK_TIMER_SRC" ]; then
+        mkdir -p "$SYSTEMD_DIR"
+        sed \
+            -e "s|__PYTHON3__|$PYTHON_CMD|g" \
+            -e "s|__ARCHON_ROOT__|$PROJECT_DIR|g" \
+            -e "s|__ARCHON_HOME__|$HOME/.archon|g" \
+            "$BENCHMARK_SERVICE_SRC" > "$SYSTEMD_DIR/archon-benchmark.service"
+        cp "$BENCHMARK_TIMER_SRC" "$SYSTEMD_DIR/archon-benchmark.timer"
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable --now archon-benchmark.timer 2>/dev/null || true
+        echo -e "${GREEN}  Benchmark schedule installed (weekly Sunday 02:00, systemd timer)${NC}"
+    else
+        echo -e "${YELLOW}  Skipped: benchmark service/timer files not found${NC}"
+    fi
 fi
+echo -e "${GREEN}  Config: ~/.archon/benchmark/config.json (auto-created on first run)${NC}"
 
 # Create monitor runtime directories
 mkdir -p "$HOME/.archon/monitor"
@@ -709,24 +733,41 @@ echo -e "${GREEN}  Monitor directories created (~/.archon/monitor, ~/.archon/ale
 #===============================================================================
 echo -e "${YELLOW}[12d/${TOTAL_STEPS}] Installing monitor daemon...${NC}"
 
-MONITOR_PLIST_SRC="$PROJECT_DIR/scripts/packaging/com.archon.monitor.plist"
-MONITOR_PLIST_DST="$HOME/Library/LaunchAgents/com.archon.monitor.plist"
+mkdir -p "$HOME/.archon/logs"
 
-if [ -f "$MONITOR_PLIST_SRC" ]; then
-    mkdir -p "$HOME/.archon/logs"
-    # Substitute placeholders with actual paths
-    sed \
-        -e "s|__PYTHON3__|$PYTHON_CMD|g" \
-        -e "s|__ARCHON_ROOT__|$PROJECT_DIR|g" \
-        -e "s|__ARCHON_HOME__|$HOME/.archon|g" \
-        "$MONITOR_PLIST_SRC" > "$MONITOR_PLIST_DST"
-    launchctl bootstrap "gui/$(id -u)" "$MONITOR_PLIST_DST" 2>/dev/null || true
-    echo -e "${GREEN}  Monitor daemon installed (com.archon.monitor)${NC}"
-    echo -e "${GREEN}  Socket: ~/.archon/monitor/monitor.sock${NC}"
-    echo -e "${GREEN}  Log:    ~/.archon/logs/monitor-stderr.log${NC}"
+if [[ "$(uname)" == "Darwin" ]]; then
+    MONITOR_PLIST_SRC="$PROJECT_DIR/scripts/packaging/com.archon.monitor.plist"
+    MONITOR_PLIST_DST="$HOME/Library/LaunchAgents/com.archon.monitor.plist"
+    if [ -f "$MONITOR_PLIST_SRC" ]; then
+        sed \
+            -e "s|__PYTHON3__|$PYTHON_CMD|g" \
+            -e "s|__ARCHON_ROOT__|$PROJECT_DIR|g" \
+            -e "s|__ARCHON_HOME__|$HOME/.archon|g" \
+            "$MONITOR_PLIST_SRC" > "$MONITOR_PLIST_DST"
+        launchctl bootstrap "gui/$(id -u)" "$MONITOR_PLIST_DST" 2>/dev/null || true
+        echo -e "${GREEN}  Monitor daemon installed (com.archon.monitor, launchd)${NC}"
+    else
+        echo -e "${YELLOW}  Skipped: monitor plist not found${NC}"
+    fi
 else
-    echo -e "${YELLOW}  Skipped: monitor plist not found${NC}"
+    MONITOR_SERVICE_SRC="$PROJECT_DIR/scripts/packaging/archon-monitor.service"
+    SYSTEMD_DIR="$HOME/.config/systemd/user"
+    if [ -f "$MONITOR_SERVICE_SRC" ]; then
+        mkdir -p "$SYSTEMD_DIR"
+        sed \
+            -e "s|__PYTHON3__|$PYTHON_CMD|g" \
+            -e "s|__ARCHON_ROOT__|$PROJECT_DIR|g" \
+            -e "s|__ARCHON_HOME__|$HOME/.archon|g" \
+            "$MONITOR_SERVICE_SRC" > "$SYSTEMD_DIR/archon-monitor.service"
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable --now archon-monitor 2>/dev/null || true
+        echo -e "${GREEN}  Monitor daemon installed (archon-monitor, systemd)${NC}"
+    else
+        echo -e "${YELLOW}  Skipped: monitor service file not found${NC}"
+    fi
 fi
+echo -e "${GREEN}  Socket: ~/.archon/monitor/monitor.sock${NC}"
+echo -e "${GREEN}  Log:    ~/.archon/logs/monitor-stderr.log${NC}"
 
 #===============================================================================
 # STEP 12e: Install Push-to-Talk Daemon

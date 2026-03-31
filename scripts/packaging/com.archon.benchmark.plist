@@ -7,15 +7,14 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/env</string>
-        <string>python3</string>
+        <string>__PYTHON3__</string>
         <string>scripts/benchmark/run-benchmark.py</string>
         <string>--model</string>
         <string>sonnet</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Volumes/Externalwork/projects/claudeflow-testing</string>
+    <string>__ARCHON_ROOT__</string>
 
     <key>StartCalendarInterval</key>
     <dict>
@@ -28,10 +27,10 @@
     </dict>
 
     <key>StandardOutPath</key>
-    <string>/Users/stevenbahia/.archon/logs/benchmark-stdout.log</string>
+    <string>__ARCHON_HOME__/logs/benchmark-stdout.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/Users/stevenbahia/.archon/logs/benchmark-stderr.log</string>
+    <string>__ARCHON_HOME__/logs/benchmark-stderr.log</string>
 
     <key>EnvironmentVariables</key>
     <dict>

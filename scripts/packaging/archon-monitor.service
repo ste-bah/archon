@@ -1,0 +1,19 @@
+[Unit]
+Description=Archon Monitor Daemon
+Documentation=https://github.com/ste-bah/archon
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=__ARCHON_ROOT__
+Environment=PYTHONPATH=__ARCHON_ROOT__
+ExecStart=__PYTHON3__ -m src.archon_monitor
+Restart=always
+RestartSec=10
+StandardOutput=append:__ARCHON_HOME__/logs/monitor-stdout.log
+StandardError=append:__ARCHON_HOME__/logs/monitor-stderr.log
+SyslogIdentifier=archon-monitor
+Nice=10
+
+[Install]
+WantedBy=default.target

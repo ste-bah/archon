@@ -1,0 +1,13 @@
+[Unit]
+Description=Archon Weekly Benchmark Run
+Documentation=https://github.com/ste-bah/archon
+
+[Service]
+Type=oneshot
+WorkingDirectory=__ARCHON_ROOT__
+Environment=PATH=__ARCHON_ROOT__/.venv/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=__PYTHON3__ scripts/benchmark/run-benchmark.py --model sonnet
+StandardOutput=append:__ARCHON_HOME__/logs/benchmark-stdout.log
+StandardError=append:__ARCHON_HOME__/logs/benchmark-stderr.log
+SyslogIdentifier=archon-benchmark
+Nice=10

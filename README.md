@@ -10,7 +10,7 @@ Archon is a persistent intelligence layer for Claude Code. It gives your AI agen
 
 Built over several months of daily use. 1,577 source files. 288 agent definitions. 469+ automated tests. Every behavioral rule learned from a real mistake.
 
-**Version**: 2.1.1 | **Last Updated**: March 2026
+**Version**: 2.1.2 | **Last Updated**: March 2026
 
 ---
 
