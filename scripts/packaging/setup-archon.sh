@@ -651,6 +651,7 @@ mkdir -p "$PROJECT_DIR/.agentdb/graphs"
 mkdir -p "$PROJECT_DIR/tmp"
 mkdir -p "$PROJECT_DIR/logs"
 mkdir -p "$PROJECT_DIR/config"
+mkdir -p "$PROJECT_DIR/.persistent-memory/sessions"
 
 mkdir -p "$HOME/.archon/ptt"
 
