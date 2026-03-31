@@ -655,10 +655,18 @@ mkdir -p "$PROJECT_DIR/config"
 mkdir -p "$HOME/.archon/ptt"
 
 # Claude Code 2.x reads slash commands from .claude/skills/, not .claude/commands/
-# Mirror god-* commands into skills/ so /god-code, /god-research etc. work on all platforms
+# Mirror god-* commands into skills/ with name: field injected so they register as slash commands
 mkdir -p "$PROJECT_DIR/.claude/skills"
 for f in "$PROJECT_DIR/.claude/commands"/god-*.md; do
-    [ -f "$f" ] && cp "$f" "$PROJECT_DIR/.claude/skills/"
+    [ -f "$f" ] || continue
+    name=$(basename "$f" .md)
+    dest="$PROJECT_DIR/.claude/skills/$name.md"
+    # Skip if already has name: field (e.g. already in git with correct format)
+    if grep -q "^name:" "$dest" 2>/dev/null; then
+        continue
+    fi
+    # Inject name: after opening --- so Claude Code registers it as a slash command
+    awk -v n="$name" '/^---$/ && !done { print; print "name: " n; done=1; next } { print }' "$f" > "$dest"
 done
 echo -e "${GREEN}  Runtime directories created (incl .agentdb for GraphDB/SoNA, ~/.archon/ptt for push-to-talk)${NC}"
 echo -e "${GREEN}  god-* commands mirrored to .claude/skills/ for Claude Code 2.x compatibility${NC}"
