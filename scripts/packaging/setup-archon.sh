@@ -654,14 +654,15 @@ mkdir -p "$PROJECT_DIR/config"
 
 mkdir -p "$HOME/.archon/ptt"
 
-# Claude Code 2.x reads slash commands from .claude/skills/, not .claude/commands/
-# Mirror god-* commands into skills/ with name: field injected so they register as slash commands
+# Claude Code on Linux requires skills as directories with SKILL.md inside, not flat .md files
+# Mirror god-* commands into .claude/skills/<name>/SKILL.md with name: field injected
 mkdir -p "$PROJECT_DIR/.claude/skills"
 for f in "$PROJECT_DIR/.claude/commands"/god-*.md; do
     [ -f "$f" ] || continue
     name=$(basename "$f" .md)
-    dest="$PROJECT_DIR/.claude/skills/$name.md"
-    # Skip if already has name: field (e.g. already in git with correct format)
+    dest="$PROJECT_DIR/.claude/skills/$name/SKILL.md"
+    mkdir -p "$PROJECT_DIR/.claude/skills/$name"
+    # Skip if already in correct format (from git)
     if grep -q "^name:" "$dest" 2>/dev/null; then
         continue
     fi
