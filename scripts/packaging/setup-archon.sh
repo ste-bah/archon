@@ -653,7 +653,15 @@ mkdir -p "$PROJECT_DIR/logs"
 mkdir -p "$PROJECT_DIR/config"
 
 mkdir -p "$HOME/.archon/ptt"
+
+# Claude Code 2.x reads slash commands from .claude/skills/, not .claude/commands/
+# Mirror god-* commands into skills/ so /god-code, /god-research etc. work on all platforms
+mkdir -p "$PROJECT_DIR/.claude/skills"
+for f in "$PROJECT_DIR/.claude/commands"/god-*.md; do
+    [ -f "$f" ] && cp "$f" "$PROJECT_DIR/.claude/skills/"
+done
 echo -e "${GREEN}  Runtime directories created (incl .agentdb for GraphDB/SoNA, ~/.archon/ptt for push-to-talk)${NC}"
+echo -e "${GREEN}  god-* commands mirrored to .claude/skills/ for Claude Code 2.x compatibility${NC}"
 
 #===============================================================================
 # STEP 11: Archon Seed Data Import (identity, values, behavioral rules)
