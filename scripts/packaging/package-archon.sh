@@ -26,7 +26,7 @@ NC='\033[0m'
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUTPUT_DIR="$PROJECT_DIR/archon-package"
 CREATE_TARBALL=false
-VERSION="2.2.6"
+VERSION="2.2.7"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -134,7 +134,19 @@ if [ -d "$PROJECT_DIR/.claude/commands" ]; then
 fi
 COMMAND_COUNT=$(find "$OUTPUT_DIR/.claude/commands" -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
 
-echo -e "${GREEN}  Done: ${AGENT_DIR_COUNT} agent dirs (${AGENT_FILE_COUNT} files), ${SKILL_COUNT} skills, ${COMMAND_COUNT} commands, ${HOOK_COUNT} hooks${NC}"
+# Skills — Claude Code 2.x reads slash commands from .claude/skills/, not .claude/commands/
+# Copy the full skills directory, then also copy god-* command files into skills/
+if [ -d "$PROJECT_DIR/.claude/skills" ]; then
+    cp -r "$PROJECT_DIR/.claude/skills" "$OUTPUT_DIR/.claude/"
+fi
+mkdir -p "$OUTPUT_DIR/.claude/skills"
+# god-* commands live only in commands/ — mirror them into skills/ so /god-code etc. work
+for f in "$PROJECT_DIR/.claude/commands"/god-*.md; do
+    [ -f "$f" ] && cp "$f" "$OUTPUT_DIR/.claude/skills/"
+done
+SKILLS_DIR_COUNT=$(find "$OUTPUT_DIR/.claude/skills" -maxdepth 1 -mindepth 1 | wc -l | tr -d ' ')
+
+echo -e "${GREEN}  Done: ${AGENT_DIR_COUNT} agent dirs (${AGENT_FILE_COUNT} files), ${SKILL_COUNT} agent skills, ${SKILLS_DIR_COUNT} project skills, ${COMMAND_COUNT} commands, ${HOOK_COUNT} hooks${NC}"
 echo -e "${GREEN}  Included: coding-pipeline, phdresearch, usacf, market-pipeline, business-research, pentestsystem, custom, + more${NC}"
 echo -e "${GREEN}  Excluded: .claude/agents/.claude/agents/ (generated), feedback-queue.processed.* (~400 files)${NC}"
 
