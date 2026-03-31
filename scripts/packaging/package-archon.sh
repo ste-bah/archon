@@ -366,6 +366,8 @@ cp "$PROJECT_DIR/tsconfig.json" "$OUTPUT_DIR/" 2>/dev/null || true
 cp "$PROJECT_DIR/CLAUDE.md" "$OUTPUT_DIR/" 2>/dev/null || true
 cp "$PROJECT_DIR/vitest.config.ts" "$OUTPUT_DIR/" 2>/dev/null || true
 cp "$PROJECT_DIR/.gitignore" "$OUTPUT_DIR/" 2>/dev/null || true
+cp "$PROJECT_DIR/install.sh" "$OUTPUT_DIR/" 2>/dev/null || true
+chmod +x "$OUTPUT_DIR/install.sh" 2>/dev/null || true
 
 # License (LICENSE-archon -> LICENSE in package)
 if [ -f "$PROJECT_DIR/LICENSE-archon" ]; then

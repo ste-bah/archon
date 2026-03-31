@@ -343,10 +343,12 @@ MGEOF
 
     # Step 6e: Deploy register-mcp.sh so it can be re-run after auth if needed
     mkdir -p "$HOME/.archon/scripts"
-    REGISTER_MCP_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/../archon" 2>/dev/null && pwd)/register-mcp.sh"
+    REGISTER_MCP_SRC="$PROJECT_DIR/scripts/archon/register-mcp.sh"
     if [ -f "$REGISTER_MCP_SRC" ]; then
         cp "$REGISTER_MCP_SRC" "$HOME/.archon/scripts/register-mcp.sh"
         chmod +x "$HOME/.archon/scripts/register-mcp.sh"
+    else
+        echo -e "${YELLOW}  Warning: register-mcp.sh not found at $REGISTER_MCP_SRC${NC}"
     fi
 
     # Step 6f: Register immediately
