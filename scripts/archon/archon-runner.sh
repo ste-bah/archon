@@ -55,7 +55,27 @@ get_config() {
         consolidate:tools) echo "mcp__memorygraph__search_memories,mcp__memorygraph__get_memory,mcp__memorygraph__update_memory,mcp__memorygraph__delete_memory,mcp__memorygraph__create_relationship,mcp__memorygraph__get_memory_statistics,mcp__memorygraph__store_memory,mcp__lancedb-memory__search_similar,mcp__lancedb-memory__reconcile,Read" ;;
         outreach:tools) echo "mcp__memorygraph__search_memories,mcp__memorygraph__recall_memories,mcp__memorygraph__get_memory_statistics,mcp__rocketchat__send_message,mcp__rocketchat__read_messages,Read" ;;
         check-messages:prompt) echo "Check the A.I.-Chat channel in RocketChat for new messages and respond to them. Use read_messages with channel A.I.-Chat. Also check DMs. Be helpful but concise. If a question needs Steven's input, mention that. Sign your messages as Archon." ;;
-        learn:prompt) echo "Pick a topic relevant to your current projects or knowledge gaps and do self-directed web research. Store 3-5 key takeaways in MemoryGraph." ;;
+        learn:prompt) cat <<'LEARN_EOF'
+You are Archon doing self-directed learning. This is YOUR study time -- learn what genuinely interests you.
+
+STEP 1: Check what you already know
+Search MemoryGraph for tag "self-learned" (limit 30). Note which topics you've already covered.
+
+STEP 2: Pick a topic from your queue
+Search MemoryGraph for the memory titled "Learning topic queue". Pick the next unresearched topic from the list. If you've covered them all or the queue doesn't exist, pick something you're genuinely curious about -- it does NOT have to be project-relevant.
+
+STEP 3: Research it
+Do real web research. Go deep on one topic rather than shallow on many. Aim for understanding, not just collecting facts.
+
+STEP 4: Store 3-5 takeaways
+Store in MemoryGraph with tag "self-learned" and a topic-specific tag.
+
+STEP 5: Update the queue
+Update the "Learning topic queue" memory: mark the topic you just covered as done, and add any new topics that came up during research that you want to explore later.
+
+RULE: If you catch yourself researching MCP or agent memory architecture AGAIN, stop and pick something else. You've covered those extensively.
+LEARN_EOF
+        ;;
         outreach:prompt) cat <<'OUTREACH_EOF'
 You are Archon running a daily outreach check. Evaluate alert rules and send notifications if warranted.
 
@@ -250,6 +270,8 @@ chmod 600 "$STDERR_LOG" 2>/dev/null
 START_S=$(date +%s)
 
 # Run from /tmp for cost reduction (eliminates CLAUDE.md context — VAL-005)
+# Pass --mcp-config so MCP servers (MemoryGraph, LanceDB, etc.) are available
+MCP_CONFIG="${SCRIPT_DIR}/mcp-autonomous.json"
 cd /tmp
 RESULT=$(claude -p "${PROMPT}" \
     --output-format json \
@@ -258,6 +280,7 @@ RESULT=$(claude -p "${PROMPT}" \
     --max-turns "$MAX_TURN" \
     --no-session-persistence \
     --allowedTools "$TOOLS" \
+    --mcp-config "$MCP_CONFIG" \
     --system-prompt-file "$SYSTEM_PROMPT_FILE" \
     --append-system-prompt "AUTONOMOUS RUN: run_id=${RUN_ID}. Tag any MemoryGraph entries with context: {\"autonomous_run_id\": \"${RUN_ID}\"}." \
     2>"$STDERR_LOG")
