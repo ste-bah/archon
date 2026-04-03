@@ -1,6 +1,6 @@
 #!/bin/bash
 # God Agent Services - Background Startup
-# Starts all 5 daemon services in the background with health checks
+# Starts all 6 daemon services in the background with health checks
 # All services log to logs/ with automatic rotation (keep last 5 per service)
 
 set -e
@@ -140,6 +140,44 @@ else
         echo -e "${GREEN}ok${NC} (no pidfile) → $obs_logfile"
     else
         echo -e "${RED}failed${NC} (see $obs_logfile)"
+    fi
+fi
+
+# 6. Code Cartographer
+CART_PID_FILE="$HOME/.archon/cartographer/daemon.pid"
+CART_PORT=8042
+cart_running=false
+if [ -f "$CART_PID_FILE" ]; then
+    cart_pid=$(cat "$CART_PID_FILE" 2>/dev/null)
+    if [ -n "$cart_pid" ] && kill -0 "$cart_pid" 2>/dev/null; then
+        cart_running=true
+    fi
+fi
+
+if [ "$cart_running" = true ]; then
+    echo -e "${YELLOW}skip${NC}  Code Cartographer (already running, PID $cart_pid)"
+else
+    cart_logfile="$LOG_DIR/cartographer.log"
+    rotate_log "$cart_logfile"
+    printf "%-25s" "  Code Cartographer"
+    bash "$SCRIPT_DIR/archon/cartographer-start.sh" --background >>"$cart_logfile" 2>&1 &
+    cart_start_pid=$!
+    # Wait for health check (max 15s)
+    elapsed=0
+    while [ $elapsed -lt 15 ]; do
+        sleep 1
+        elapsed=$((elapsed + 1))
+        if curl -sf "http://127.0.0.1:${CART_PORT}/health" >/dev/null 2>&1; then
+            echo -e "${GREEN}ok${NC} (${elapsed}s) → $cart_logfile"
+            break
+        fi
+    done
+    if [ $elapsed -ge 15 ]; then
+        if kill -0 "$cart_start_pid" 2>/dev/null; then
+            echo -e "${YELLOW}starting${NC} (slow) → $cart_logfile"
+        else
+            echo -e "${RED}failed${NC} (see $cart_logfile)"
+        fi
     fi
 fi
 

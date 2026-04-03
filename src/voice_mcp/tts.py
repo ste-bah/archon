@@ -18,6 +18,15 @@ _id_counter = itertools.count()
 
 logger = logging.getLogger("voice-mcp.tts")
 
+def _is_wsl() -> bool:
+    """Detect if running under Windows Subsystem for Linux."""
+    try:
+        with open("/proc/version", "r") as f:
+            return "microsoft" in f.read().lower()
+    except OSError:
+        return False
+
+
 DEFAULT_MACOS_VOICE = "Samantha"
 DEFAULT_LINUX_VOICE = "af_heart"
 DEFAULT_ESPEAK_VOICE = "en"
@@ -200,6 +209,10 @@ class TTSEngine:
     def _play_kokoro(self, item: PlaybackItem) -> None:
         try:
             if self._kokoro_pipeline is None:
+                import torch
+                # Force CPU on WSL — CUDA reports available but kernels fail
+                if not torch.cuda.is_available() or _is_wsl():
+                    torch.set_default_device("cpu")
                 from kokoro import KPipeline
                 self._kokoro_pipeline = KPipeline(lang_code="a")
 

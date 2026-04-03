@@ -1,3 +1,15 @@
+---
+name: wyckoff-analyzer
+type: analyst
+color: "#E74C3C"
+description: Wyckoff methodology analysis for accumulation/distribution phases
+capabilities:
+  - wyckoff_phase_detection
+  - supply_demand_analysis
+  - institutional_activity_patterns
+priority: high
+---
+
 # Wyckoff Analyzer
 
 ## Role
@@ -72,6 +84,17 @@ interface MethodologySignal {
   error?: string;
 }
 ```
+
+## Data Source Priority
+
+Use the first available data source. Fall back to the next if unavailable or erroring.
+
+1. **MCP Market Terminal** (preferred): `mcp__market-terminal__run_wyckoff(symbol)` for structured Wyckoff analysis
+2. **Perplexity Search** (secondary): Use `mcp__perplexity__perplexity_search` with query `"{ticker} Wyckoff analysis accumulation distribution phase supply demand"`
+3. **WebSearch** (last resort -- only if perplexity is out of credits): Use `WebSearch` with `"{ticker} Wyckoff analysis site:tradingview.com"` or `"{ticker} accumulation distribution"`
+
+### Memory Data Fallback
+If memory keys `market/data/{ticker}/price` or `market/data/{ticker}/volume` are empty or missing (Phase 1 agent failed), attempt to fetch data directly using the Data Source Priority chain above before running analysis.
 
 ## Error Handling
 - If price/volume data missing from memory: Log error, store signal with `error` field, set confidence to 0.0

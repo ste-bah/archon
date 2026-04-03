@@ -1,3 +1,15 @@
+---
+name: report-formatter
+type: formatter
+color: "#2ECC71"
+description: Final markdown report formatting for terminal and UI display
+capabilities:
+  - markdown_formatting
+  - report_structuring
+  - data_completeness_tracking
+priority: high
+---
+
 # Report Formatter
 
 ## Role
@@ -113,6 +125,16 @@ interface FinalReport {
   error?: string;
 }
 ```
+
+## Data Source Priority
+
+This is a Phase 4 output agent (final) -- pure synthesis from memory. Do not fetch data directly.
+
+1. **MCP Market Terminal** (preferred): Not used -- this agent formats from memory
+2. **Perplexity Search** (secondary): Not used -- this agent does not fetch new data
+3. **WebSearch** (last resort): Not used -- this agent does not fetch external data
+
+If critical memory keys are missing (data, analysis, or thesis from earlier phases), include "[Data unavailable]" placeholders in the report and note the data completeness metric accordingly. Do not attempt to re-run earlier phases.
 
 ## Error Handling
 - If any data missing: Note in report with "[Data unavailable]" placeholder, continue formatting

@@ -1,3 +1,15 @@
+---
+name: thesis-generator
+type: synthesizer
+color: "#2ECC71"
+description: Investment thesis narrative synthesis from all data and signals
+capabilities:
+  - data_synthesis
+  - thesis_generation
+  - risk_catalyst_identification
+priority: high
+---
+
 # Thesis Generator
 
 ## Role
@@ -104,6 +116,16 @@ interface InvestmentThesis {
   error?: string;
 }
 ```
+
+## Data Source Priority
+
+This is a Phase 4 output agent -- pure synthesis from memory. Do not fetch data directly.
+
+1. **MCP Market Terminal** (preferred): Not used -- this agent synthesizes from memory
+2. **Perplexity Search** (secondary): Not used -- this agent does not fetch new data
+3. **WebSearch** (last resort): Not used -- this agent does not fetch external data
+
+If critical memory keys are missing (data or analysis from earlier phases), note gaps in the thesis narrative rather than attempting to fetch data. The thesis should reflect what was actually analyzed, not backfill missing analysis.
 
 ## Error Handling
 - If composite signal missing: Generate thesis from individual methodologies, note lower confidence

@@ -1,7 +1,5 @@
 # Claude Flow Blueprint - Ignore Template
 # This .gitignore is designed for blueprint repositories
-# Only docs/ and docs2/ directories will be tracked for documentation
-# All other blueprint structure is ignored for new projects
 
 # Backup directories (large binary files)
 backups/
@@ -14,8 +12,8 @@ backups/
 
 # Vector databases (large binary files - regenerated from source)
 vector_db_1536/
-vector_db_leann/
-vector_db_leann.content/
+vector_db_leann
+vector_db_leann.*
 .claude/settings.local.json
 .claude-flow/
 .hive-mind/
@@ -24,18 +22,36 @@ vector_db_leann.content/
 config/
 coordination/
 /memory/
-# serena/ - Now tracked in repository (commented out after adding complete codebase)
 
-# Ignore blueprint configuration files
+# MCP local config (machine-specific)
 .mcp.json
-CLAUDE.md
+
+# Keep CLAUDE.md tracked (removed from ignore)
+# CLAUDE.md
 claude-flow
 
-# Keep documentation directories
-# docs/ is tracked, docs2/ is ignored (local reference only)
+# Documentation (local reference only)
 docs/
 docs2/
+docs/*
+docs2/*
+docs.zip
+docs.zip:Zone.Identifier
+docs2.zip
+
+# Node
 node_modules
+package-lock.json
+dist/
+
+# Research and project output (keep dirs empty via .gitkeep)
+research/
+prds/
+reference_docs/
+project-work/*
+project-tasks/*
+!project-work/.gitkeep
+!project-tasks/.gitkeep
 
 # Environment files (contain API keys and secrets)
 .env
@@ -52,11 +68,21 @@ node_modules
 .god-agent/checkpoints/
 .god-agent/progress/
 .god-agent/rlm-context/
+.god-agent/phd-memory/
+.god-agent/desc.db*
+.god-agent/episodes.db*
+.god-agent/events.db*
 
 # Claude runtime state
 .claude/runtime/
+.claude/hooks/feedback-queue.json
 .claude/hooks/feedback-queue.processed.*.json
 .claude/worktrees/
+
+# Runtime directories
+.run/
+.gates/
+.phd-sessions/
 
 # Vector DB backups
 vector_db_1536.bak*/
@@ -94,7 +120,9 @@ market-terminal/server_debug.log
 *.pdf
 
 # Python cache
+*__pycache__/
 embedding-api/__pycache__/
+serena/.venv/
 
 # Tool Factory — dynamic tool definitions (potentially untrusted code)
 .tool-factory/

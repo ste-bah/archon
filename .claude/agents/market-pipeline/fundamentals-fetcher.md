@@ -1,3 +1,15 @@
+---
+name: fundamentals-fetcher
+type: data-collector
+color: "#3498DB"
+description: Fetches fundamental financials, ownership, and insider data
+capabilities:
+  - fundamentals_retrieval
+  - ownership_analysis
+  - insider_activity_tracking
+priority: high
+---
+
 # Fundamentals Fetcher
 
 ## Role
@@ -96,6 +108,26 @@ interface InsiderData {
   error?: string;
 }
 ```
+
+## Data Source Priority
+
+Use the first available data source. Fall back to the next if unavailable or erroring.
+
+1. **MCP Market Terminal** (preferred): `mcp__market-terminal__get_fundamentals(symbol)`, `mcp__market-terminal__get_ownership(symbol)`, `mcp__market-terminal__get_insider_activity(symbol, days=90)`
+2. **Perplexity Search** (secondary): Use `mcp__perplexity__perplexity_search` with queries:
+   - Fundamentals: `"{ticker} financial metrics market cap PE ratio EPS revenue growth profit margin"`
+   - Ownership: `"{ticker} institutional ownership top holders percentage"`
+   - Insider: `"{ticker} insider transactions buying selling 90 days"`
+3. **WebSearch** (last resort -- only if perplexity is out of credits): Use `WebSearch` + `WebFetch` with:
+   - Fundamentals: `"{ticker} financials site:macrotrends.net"` or `"{ticker} key statistics site:finance.yahoo.com"`
+   - Ownership: `"{ticker} institutional ownership site:finviz.com"` or `"{ticker} holders site:nasdaq.com"`
+   - Insider: `"{ticker} insider trading site:openinsider.com"` or `"{ticker} insider transactions site:finviz.com"`
+
+### Detection Logic
+- Try MCP market-terminal tools first. If tool not found or returns error, try perplexity.
+- If perplexity returns credit/rate limit error, fall back to WebSearch.
+- Always prefer structured data over unstructured when available.
+- Parse web results into the FundamentalsData/OwnershipData/InsiderData schemas as closely as possible.
 
 ## Error Handling
 - If `get_fundamentals` fails: Store error in fundamentals data object with `error` field, continue to ownership fetch

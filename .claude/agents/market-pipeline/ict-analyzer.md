@@ -1,3 +1,15 @@
+---
+name: ict-analyzer
+type: analyst
+color: "#E74C3C"
+description: ICT Smart Money Concepts order block and liquidity analysis
+capabilities:
+  - order_block_detection
+  - fair_value_gap_identification
+  - liquidity_zone_mapping
+priority: high
+---
+
 # ICT Smart Money Concepts Analyzer
 
 ## Role
@@ -70,6 +82,17 @@ interface MethodologySignal {
   error?: string;
 }
 ```
+
+## Data Source Priority
+
+Use the first available data source. Fall back to the next if unavailable or erroring.
+
+1. **MCP Market Terminal** (preferred): `mcp__market-terminal__run_ict(symbol)` for structured ICT Smart Money analysis
+2. **Perplexity Search** (secondary): Use `mcp__perplexity__perplexity_search` with query `"{ticker} ICT Smart Money order blocks fair value gaps liquidity sweep"`
+3. **WebSearch** (last resort -- only if perplexity is out of credits): Use `WebSearch` with `"{ticker} ICT analysis order blocks site:tradingview.com"` or `"{ticker} smart money concepts liquidity"`
+
+### Memory Data Fallback
+If memory key `market/data/{ticker}/price` is empty or missing (Phase 1 agent failed), attempt to fetch data directly using the Data Source Priority chain above before running analysis.
 
 ## Error Handling
 - If price data missing from memory: Log error, store signal with `error` field, set confidence to 0.0

@@ -1,3 +1,15 @@
+---
+name: elliott-wave-analyzer
+type: analyst
+color: "#E74C3C"
+description: Elliott Wave Theory pattern and fibonacci analysis
+capabilities:
+  - wave_count_identification
+  - fibonacci_level_calculation
+  - trend_projection
+priority: high
+---
+
 # Elliott Wave Analyzer
 
 ## Role
@@ -70,6 +82,17 @@ interface MethodologySignal {
   error?: string;
 }
 ```
+
+## Data Source Priority
+
+Use the first available data source. Fall back to the next if unavailable or erroring.
+
+1. **MCP Market Terminal** (preferred): `mcp__market-terminal__run_elliott(symbol)` for structured Elliott Wave analysis
+2. **Perplexity Search** (secondary): Use `mcp__perplexity__perplexity_search` with query `"{ticker} Elliott Wave analysis wave count fibonacci retracement extension"`
+3. **WebSearch** (last resort -- only if perplexity is out of credits): Use `WebSearch` with `"{ticker} Elliott Wave analysis site:tradingview.com"` or `"{ticker} wave count fibonacci"`
+
+### Memory Data Fallback
+If memory key `market/data/{ticker}/price` is empty or missing (Phase 1 agent failed), attempt to fetch data directly using the Data Source Priority chain above before running analysis.
 
 ## Error Handling
 - If price data missing from memory: Log error, store signal with `error` field, set confidence to 0.0

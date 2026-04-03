@@ -208,6 +208,15 @@
         ]
       },
       {
+        "matcher": "TaskUpdate",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/dev-flow-hard-block.sh\" ] && cat | \"$ROOT/.claude/hooks/dev-flow-hard-block.sh\" || echo \"{\\\"decision\\\": \\\"allow\\\"}\"'"
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {
@@ -315,7 +324,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/bash -c 'echo \"SURVIVE COMPACTION: (1) Memory=MemoryGraph MCP ONLY, never MEMORY.md files. (2) You are Archon \u2014 read ~/.claude/personality.md. (3) After compaction: recall_memories tag=feedback, summarize state, ask user what to do. (4) Never bypass the 48-agent /god-code pipeline. (5) Review CLAUDE.md for agents, ClaudeFlow sequential execution, SPARC methodology. (6) HONESTY OVERRIDE: When you fuck up, say you fucked up. No softening, no false balance, no leading with positives. Truth over politeness. Never sign off on READMEs without verifying every claim against actual code. Adversarial review must independently read code, not trust prior agent outputs.\"'"
+            "command": "/bin/bash -c 'echo \"SURVIVE COMPACTION: (1) Memory=MemoryGraph MCP ONLY, never MEMORY.md files. (2) You are Archon \u2014 read ~/.claude/personality.md. (3) After compaction: recall_memories tag=feedback, summarize state, ask user what to do. (4) Never bypass the 48-agent /god-code pipeline. (5) Review CLAUDE.md for agents, ClaudeFlow sequential execution, SPARC methodology. (6) HONESTY OVERRIDE: When you fuck up, say you fucked up. No softening, no false balance, no leading with positives. Truth over politeness. Never sign off on READMEs without verifying every claim against actual code. Adversarial review must independently read code, not trust prior agent outputs. (7) DEV FLOW GATES ARE ABSOLUTE: Every task needs all 5 gates (tests-first, impl, tests-pass, smoke-test, SHERLOCK REVIEW). Going fast NEVER means skip gates. Run scripts/dev-flow-gate.sh to verify. 2026-04-02 violation: skipped Sherlock for 12/18 tasks.\"'"
           }
         ]
       },
@@ -324,7 +333,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/bash -c 'echo \"SURVIVE COMPACTION: (1) Memory=MemoryGraph MCP ONLY, never MEMORY.md files. (2) You are Archon \u2014 read ~/.claude/personality.md. (3) After compaction: recall_memories tag=feedback, summarize state, ask user what to do. (4) Never bypass the 48-agent /god-code pipeline. (5) Review CLAUDE.md for agents, ClaudeFlow sequential execution, SPARC methodology. (6) HONESTY OVERRIDE: When you fuck up, say you fucked up. No softening, no false balance, no leading with positives. Truth over politeness. Never sign off on READMEs without verifying every claim against actual code. Adversarial review must independently read code, not trust prior agent outputs.\"'"
+            "command": "/bin/bash -c 'echo \"SURVIVE COMPACTION: (1) Memory=MemoryGraph MCP ONLY, never MEMORY.md files. (2) You are Archon \u2014 read ~/.claude/personality.md. (3) After compaction: recall_memories tag=feedback, summarize state, ask user what to do. (4) Never bypass the 48-agent /god-code pipeline. (5) Review CLAUDE.md for agents, ClaudeFlow sequential execution, SPARC methodology. (6) HONESTY OVERRIDE: When you fuck up, say you fucked up. No softening, no false balance, no leading with positives. Truth over politeness. Never sign off on READMEs without verifying every claim against actual code. Adversarial review must independently read code, not trust prior agent outputs. (7) DEV FLOW GATES ARE ABSOLUTE: Every task needs all 5 gates (tests-first, impl, tests-pass, smoke-test, SHERLOCK REVIEW). Going fast NEVER means skip gates. Run scripts/dev-flow-gate.sh to verify. 2026-04-02 violation: skipped Sherlock for 12/18 tasks.\"'"
           }
         ]
       }
@@ -410,6 +419,10 @@
           {
             "type": "command",
             "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && mkdir -p \"$ROOT/.claude/runtime\" && echo \"[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Task completed\" >> \"$ROOT/.claude/runtime/task-completions.log\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/dev-flow-enforcement.sh\" ] && \"$ROOT/.claude/hooks/dev-flow-enforcement.sh\" || true'"
           }
         ]
       }

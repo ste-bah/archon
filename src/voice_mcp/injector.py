@@ -237,19 +237,32 @@ class WaylandInjector(TextInjector):
 # Factory
 # ---------------------------------------------------------------------------
 
+def _is_wsl() -> bool:
+    """Detect if running under Windows Subsystem for Linux."""
+    try:
+        with open("/proc/version", "r") as f:
+            return "microsoft" in f.read().lower()
+    except OSError:
+        return False
+
+
 def create_injector(
     *,
     wayland_preference: str = "auto",
     target_pattern: str | None = None,
     macos_clipboard_threshold: int = 200,
 ) -> TextInjector:
-    """Return the appropriate TextInjector for the current platform."""
+    """Return the appropriate TextInjector for the current platform.
+
+    WSLg sets WAYLAND_DISPLAY but its compositor lacks ydotool/dotool.
+    Force X11 (xdotool) on WSL since XWayland is available.
+    """
     system = platform.system()
 
     if system == "Darwin":
         return MacOSInjector(clipboard_threshold=macos_clipboard_threshold)
 
-    if os.environ.get("WAYLAND_DISPLAY"):
+    if os.environ.get("WAYLAND_DISPLAY") and not _is_wsl():
         return WaylandInjector(
             preference=wayland_preference,
             target_pattern=target_pattern,

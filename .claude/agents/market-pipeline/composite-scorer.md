@@ -1,3 +1,15 @@
+---
+name: composite-scorer
+type: aggregator
+color: "#F39C12"
+description: Weighted composite signal from all 6 methodology analyzers
+capabilities:
+  - signal_aggregation
+  - confluence_detection
+  - weighted_scoring
+priority: high
+---
+
 # Composite Scorer
 
 ## Role
@@ -84,6 +96,16 @@ interface CompositeSignal {
   error?: string;
 }
 ```
+
+## Data Source Priority
+
+This is a Phase 3 aggregation agent -- pure synthesis from memory. Do not fetch data directly.
+
+1. **MCP Market Terminal** (preferred if available): `mcp__market-terminal__run_composite(symbol)` for weighted scoring
+2. **Perplexity Search** (secondary): Not used -- this agent synthesizes from memory, does not fetch new data
+3. **WebSearch** (last resort): Not used -- this agent does not fetch external data
+
+If critical memory keys are missing (methodology signals from Phase 2), note gaps in output and adjust weights proportionally. Do not attempt to re-run Phase 2 analysis.
 
 ## Error Handling
 - If any methodology signal missing: Log warning, exclude from composite, adjust weights proportionally (e.g., if sentiment missing, redistribute 0.15 to others)

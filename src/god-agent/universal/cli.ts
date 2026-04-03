@@ -1396,6 +1396,8 @@ async function main() {
               signalFilter: maPreparation.signalFilter,
               descContext: maPreparation.descContext,
               memoryContext: maPreparation.memoryContext,
+              // TASK-MKT-003: Include pipeline config for skill orchestration
+              pipeline: maPreparation.pipeline ?? null,
               // TASK-LOOPFIX-001: Feedback enforcement fields
               feedbackRequired: true,
               feedbackCommand: maFeedbackCommand,

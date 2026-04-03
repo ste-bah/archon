@@ -75,8 +75,8 @@ Expected JSON structure:
 {
   "command": "market-analysis",
   "selectedAgent": "god-market-analysis",
-  "prompt": "market-analysis analyze ticker:AAPL methodology:wyckoff",
-  "isPipeline": false,
+  "prompt": "market-analysis analyze ticker:AAPL",
+  "isPipeline": true,
   "result": {
     "builtPrompt": "...",
     "agentType": "market-analyst",
@@ -84,10 +84,18 @@ Expected JSON structure:
     "subCommand": "analyze",
     "ticker": "AAPL",
     "compareTicker": null,
-    "methodology": "wyckoff",
+    "methodology": null,
     "signalFilter": null,
-    "descContext": "...",
-    "memoryContext": "...",
+    "pipeline": {
+      "ticker": "AAPL",
+      "dataSourcePriority": ["market-terminal", "perplexity", "websearch"],
+      "phases": [
+        { "phase": 1, "name": "Data Collection", "parallel": true, "agents": [...] },
+        { "phase": 2, "name": "Methodology Analysis", "parallel": true, "agents": [...] },
+        { "phase": 3, "name": "Aggregation", "parallel": false, "agents": [...] },
+        { "phase": 4, "name": "Output", "parallel": false, "agents": [...] }
+      ]
+    },
     "feedbackRequired": true,
     "feedbackCommand": "npx tsx src/god-agent/universal/cli.ts feedback \"trj_xxx\" [quality_score] --trajectory --notes \"Market analysis task completed\""
   },
@@ -96,29 +104,111 @@ Expected JSON structure:
 }
 ```
 
-**Error gate:** If `success` is `false`, display the `error` field to the user and STOP. Do not spawn a Task().
+Each agent in the pipeline has: `{ key, name, prompt, mcpTools, memoryReads, memoryWrites }`.
+
+**Error gate:** If `success` is `false`, display the `error` field to the user and STOP. Do not spawn any agents.
 
 Save these fields for subsequent steps:
-- `result.builtPrompt` - the full prompt for Task()
-- `result.agentType` - the subagent type for Task()
+- `result.pipeline` - the pipeline config (null if single-agent mode)
+- `result.builtPrompt` - the fallback single-agent prompt
+- `result.agentType` - the fallback agent type
 - `result.feedbackCommand` - the feedback command template
 - `result.subCommand` - for display context
 - `result.ticker` - for display context
 - `trajectoryId` - for reference
+- `isPipeline` - whether to use pipeline or single-agent mode
 
-### Step 3: Spawn Task() with Selected Agent
+### Step 3: Execute Analysis
 
-**CRITICAL**: Spawn exactly ONE Task() subagent. Do NOT do the analysis directly. Do NOT modify the builtPrompt.
+Check `isPipeline` to determine execution mode. **`isPipeline` is the authoritative flag.** If `isPipeline` is `true` but `result.pipeline` is `null`, treat as an error and STOP.
+
+**Template substitution:** In all Agent() description strings below, replace `{ticker}` with `result.ticker`.
+
+#### Mode A: Pipeline Execution (isPipeline === true AND result.pipeline is not null)
+
+Orchestrate all 12 agents across 4 phases. Each agent receives its own `prompt` from the pipeline config. Use each agent's `key` field as the `subagent_type` parameter. Agents communicate via MemoryGraph -- Phase 1 writes data, Phase 2 reads data and writes analysis, Phase 3 reads analysis and writes composite, Phase 4 reads everything and writes the report.
+
+**PHASE 1 -- Data Collection (parallel)**
+
+Launch 3 Agent() calls simultaneously in a SINGLE message with multiple tool uses:
 
 ```
-Task("<result.agentType>", "<result.builtPrompt>", "<result.agentType>")
+Agent(description="data-fetcher for {ticker}", subagent_type=pipeline.phases[0].agents[0].key, prompt=pipeline.phases[0].agents[0].prompt)
+Agent(description="fundamentals-fetcher for {ticker}", subagent_type=pipeline.phases[0].agents[1].key, prompt=pipeline.phases[0].agents[1].prompt)
+Agent(description="news-macro-fetcher for {ticker}", subagent_type=pipeline.phases[0].agents[2].key, prompt=pipeline.phases[0].agents[2].prompt)
 ```
 
-Pass `result.builtPrompt` VERBATIM as the prompt. No additions, no modifications, no wrapping.
+Wait for all 3 to complete. An agent has "failed" if it returns an error message or produces no substantive output. If any fail: log a warning and continue -- downstream agents handle missing data gracefully.
+
+**PHASE 2 -- Methodology Analysis (parallel)**
+
+Launch 6 Agent() calls simultaneously in a SINGLE message:
+
+```
+Agent(description="wyckoff-analyzer for {ticker}", subagent_type=pipeline.phases[1].agents[0].key, prompt=pipeline.phases[1].agents[0].prompt)
+Agent(description="elliott-wave-analyzer for {ticker}", subagent_type=pipeline.phases[1].agents[1].key, prompt=pipeline.phases[1].agents[1].prompt)
+Agent(description="ict-analyzer for {ticker}", subagent_type=pipeline.phases[1].agents[2].key, prompt=pipeline.phases[1].agents[2].prompt)
+Agent(description="canslim-analyzer for {ticker}", subagent_type=pipeline.phases[1].agents[3].key, prompt=pipeline.phases[1].agents[3].prompt)
+Agent(description="williams-analyzer for {ticker}", subagent_type=pipeline.phases[1].agents[4].key, prompt=pipeline.phases[1].agents[4].prompt)
+Agent(description="sentiment-analyzer for {ticker}", subagent_type=pipeline.phases[1].agents[5].key, prompt=pipeline.phases[1].agents[5].prompt)
+```
+
+Wait for all 6 to complete. If any fail: log a warning and proceed to Phase 3 with whatever results were written to MemoryGraph.
+
+**PHASE 3 -- Aggregation (sequential)**
+
+Launch 1 Agent() call:
+
+```
+Agent(description="composite-scorer for {ticker}", subagent_type=pipeline.phases[2].agents[0].key, prompt=pipeline.phases[2].agents[0].prompt)
+```
+
+Wait for completion before proceeding to Phase 4.
+
+**PHASE 4 -- Output (sequential)**
+
+Launch agents one at a time:
+
+```
+Agent(description="thesis-generator for {ticker}", subagent_type=pipeline.phases[3].agents[0].key, prompt=pipeline.phases[3].agents[0].prompt)
+```
+
+Wait for completion. Then:
+
+```
+Agent(description="report-formatter for {ticker}", subagent_type=pipeline.phases[3].agents[1].key, prompt=pipeline.phases[3].agents[1].prompt)
+```
+
+Wait for completion. The report-formatter's output is the final analysis report.
+
+**Error Handling for Pipeline Mode:**
+- An agent "fails" if it returns an error message, an empty response, or times out
+- If ALL Phase 1 agents fail (no data written to MemoryGraph): abort pipeline, fall back to single-agent mode using `result.builtPrompt` and `result.agentType`
+- If some Phase 2 agents fail: proceed to Phase 3 -- composite-scorer adjusts weights for missing signals
+- If Phase 3 (composite-scorer) fails: present raw Phase 2 results to user, note incomplete aggregation
+- If Phase 4 fails: present Phase 3 composite results directly, note missing formatted report
+
+#### Single-Agent Execution (isPipeline === false, or pipeline fallback)
+
+For scan/compare sub-commands OR as a fallback when the pipeline cannot execute, spawn exactly ONE Agent():
+
+```
+Agent(description="market-analysis {subCommand}", prompt=result.builtPrompt, subagent_type=result.agentType)
+```
+
+Pass `result.builtPrompt` VERBATIM. No modifications.
 
 ### Step 4: Present Output
 
-Present the subagent's analysis output to the user along with:
+**Pipeline mode**: Present the report-formatter's output as the final report, along with:
+- Analysis mode (`result.subCommand`)
+- Ticker analyzed (`result.ticker`)
+- Number of phases completed (e.g., "4/4 phases")
+- Number of agents that ran successfully
+- Any agents that failed (with warnings)
+- Trajectory ID for reference
+
+**Single-agent mode**: Present the agent's output along with:
 - Analysis mode (`result.subCommand`)
 - Ticker(s) analyzed (`result.ticker`, `result.compareTicker` if compare mode)
 - Methodology applied (`result.methodology`)

@@ -30,6 +30,7 @@ import { EmbeddingProviderFactory } from '../core/memory/embedding-provider.js';
 import type { IEmbeddingProvider } from '../core/memory/types.js';
 import { AnthropicWritingGenerator, type IWritingGenerator } from '../core/writing/index.js';
 import { HybridSearchProvider, type IWebSearchProvider } from '../core/search/index.js';
+import { buildMarketPipelineConfig } from './market-pipeline-builder.js';
 import { createComponentLogger, ConsoleLogHandler, LogLevel } from '../core/observability/index.js';
 
 const universalLogger = createComponentLogger('UniversalAgent', {
@@ -452,6 +453,56 @@ export interface IWriteTaskPreparation {
  * Phase 1: CLI calls prepareMarketAnalysisTask() -> returns this interface
  * Phase 2: Skill executes Task() with builtPrompt and agentType
  */
+
+// ========== Market Pipeline Types (TASK-MKT-001) ==========
+
+/** Individual agent within a market pipeline phase */
+export interface MarketPipelineAgent {
+  /** Agent key from market-pipeline directory */
+  key: string;
+  /** Agent name for display */
+  name: string;
+  /** Prompt template with {ticker} placeholder filled */
+  prompt: string;
+  /** MCP tools this agent uses */
+  mcpTools: string[];
+  /** Memory keys this agent reads from */
+  memoryReads: string[];
+  /** Memory keys this agent writes to */
+  memoryWrites: string[];
+}
+
+/** A phase in the market analysis pipeline */
+export interface MarketPipelinePhase {
+  /** Phase number */
+  phase: 1 | 2 | 3 | 4;
+  /** Phase name for display */
+  name: string;
+  /** Whether agents in this phase run in parallel */
+  parallel: boolean;
+  /** Agents in this phase */
+  agents: MarketPipelineAgent[];
+}
+
+/** Data source identifiers for market data fallback chain */
+export type MarketDataSource = 'market-terminal' | 'perplexity' | 'websearch';
+
+/**
+ * Full pipeline configuration for multi-agent market analysis.
+ * NOTE: This is structurally different from ICodeTaskPreparation.pipeline
+ * which uses { steps, agents, config? }. Do not conflate the two.
+ */
+export interface MarketPipelineConfig {
+  /** Ticker being analyzed */
+  ticker: string;
+  /** All phases in execution order */
+  phases: MarketPipelinePhase[];
+  /** Data source priority: try each in order, fall back to next on failure. Must have at least one. */
+  dataSourcePriority: [MarketDataSource, ...MarketDataSource[]];
+}
+
+// ========== End Market Pipeline Types ==========
+
 export interface IMarketAnalysisTaskPreparation {
   /** Agent key from registry (DAI-001) */
   selectedAgent: string;
@@ -477,11 +528,11 @@ export interface IMarketAnalysisTaskPreparation {
   /** Trajectory ID for learning feedback (FR-11) */
   trajectoryId: string | null;
 
-  /** Whether this is a multi-agent pipeline task (always false for market-analysis) */
-  isPipeline: false;
+  /** Whether this is a multi-agent pipeline task */
+  isPipeline: boolean;
 
-  /** Pipeline definition (undefined for market-analysis) */
-  pipeline?: undefined;
+  /** Pipeline config when isPipeline is true, undefined otherwise */
+  pipeline?: MarketPipelineConfig;
 
   // ========== Market-Analysis-Specific Fields ==========
 
@@ -2590,6 +2641,14 @@ export class UniversalAgent {
       agentSelection.context
     );
 
+    // TASK-MKT-002: Build pipeline config for analyze sub-command
+    let pipelineConfig: MarketPipelineConfig | undefined;
+    if (options.subCommand === 'analyze' && options.ticker) {
+      pipelineConfig = buildMarketPipelineConfig(options.ticker);
+      const agentCount = pipelineConfig.phases.reduce((s, p) => s + p.agents.length, 0);
+      this.log(`TASK-MKT-002: Built pipeline config for ${options.ticker} with ${agentCount} agents across ${pipelineConfig.phases.length} phases`);
+    }
+
     // Implements [REQ-MA-001]: Return preparation result (NO execution)
     return {
       selectedAgent: agent.key,
@@ -2600,8 +2659,8 @@ export class UniversalAgent {
       descContext,
       memoryContext: agentSelection.context ?? null,
       trajectoryId,
-      isPipeline: false as const,
-      pipeline: undefined,
+      isPipeline: !!pipelineConfig,
+      pipeline: pipelineConfig,
       subCommand: options.subCommand,
       ticker: options.ticker,
       compareTicker: options.compareTicker,

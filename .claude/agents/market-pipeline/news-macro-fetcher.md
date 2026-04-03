@@ -1,3 +1,15 @@
+---
+name: news-macro-fetcher
+type: data-collector
+color: "#3498DB"
+description: Fetches news, macro calendar, and macro indicators
+capabilities:
+  - news_retrieval
+  - macro_calendar_tracking
+  - macro_indicator_analysis
+priority: high
+---
+
 # News Macro Fetcher
 
 ## Role
@@ -93,6 +105,26 @@ interface MacroHistoryData {
   error?: string;
 }
 ```
+
+## Data Source Priority
+
+Use the first available data source. Fall back to the next if unavailable or erroring.
+
+1. **MCP Market Terminal** (preferred): `mcp__market-terminal__get_news(symbol, limit=20)`, `mcp__market-terminal__get_macro_calendar(days=30)`, `mcp__market-terminal__get_macro_history(indicator, symbol="SPY")`
+2. **Perplexity Search** (secondary): Use `mcp__perplexity__perplexity_search` with queries:
+   - News: `"{ticker} stock news last 30 days earnings analyst upgrades downgrades"`
+   - Macro calendar: `"macroeconomic calendar upcoming events FOMC jobs GDP CPI next 30 days"`
+   - Macro history: `"US CPI inflation rate unemployment rate interest rate trend past 12 months"`
+3. **WebSearch** (last resort -- only if perplexity is out of credits): Use `WebSearch` + `WebFetch` with:
+   - News: `"{ticker} news site:cnbc.com"` or `"{ticker} stock news site:reuters.com"`
+   - Macro calendar: `"economic calendar site:investing.com"` or `"economic calendar site:forexfactory.com"`
+   - Macro history: `"CPI data site:tradingeconomics.com"` or `"inflation rate site:bls.gov"`
+
+### Detection Logic
+- Try MCP market-terminal tools first. If tool not found or returns error, try perplexity.
+- If perplexity returns credit/rate limit error, fall back to WebSearch.
+- Always prefer structured data over unstructured when available.
+- Parse web results into the NewsData/MacroCalendarData/MacroHistoryData schemas as closely as possible.
 
 ## Error Handling
 - If `get_news` fails: Store error in news data object with `error` field, continue to macro calendar fetch

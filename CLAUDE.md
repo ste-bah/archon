@@ -320,6 +320,26 @@ Only project source code. The following are automatically excluded:
 ## 🧠 MEMORY REMINDER
 **ALL memory uses MemoryGraph MCP. NEVER write to MEMORY.md or markdown files for memory storage.**
 
+## DEV FLOW ENFORCEMENT — ABSOLUTE LAW
+
+**When executing tasks from project-tasks/, EVERY task MUST complete ALL 5 gates IN ORDER. No exceptions. No shortcuts. "Going fast" does NOT mean skipping gates.**
+
+```
+GATE 1: tests-written-first     — Test file exists BEFORE implementation
+GATE 2: implementation-complete  — Code compiles, no errors
+GATE 3: tests-passing            — All tests pass (include count)
+GATE 4: live-smoke-test          — Feature actually invoked end-to-end
+GATE 5: sherlock-review          — Sherlock agent reviewed and approved
+```
+
+**Enforcement mechanism:**
+- Run `scripts/dev-flow-pass-gate.sh TASK-ID gate-name "evidence" /path/to/work/dir` to pass each gate
+- Run `scripts/dev-flow-gate.sh TASK-ID /path/to/work/dir` to verify all gates before marking complete
+- TaskCompleted hook checks for missing gates and prints warnings
+- A task with missing gates is NOT DONE regardless of what you think
+
+**VIOLATION = immediate stop and report. You do NOT get to decide which gates matter.**
+
 ## Core Rules
 1. Do what has been asked; nothing more, nothing less.
 2. **ALWAYS wait for explicit user confirmation before executing any plan.**
@@ -334,3 +354,5 @@ Only project source code. The following are automatically excluded:
 11. **NEVER spawn parallel implementation agents - sequential ONLY.**
 12. **After compaction: run `mcp__memorygraph__recall_memories` with query "feedback corrections preferences" before proceeding.**
 13. **`/create-agent` and `/run-agent` do NOT require confirmation — the command IS the intent.**
+14. **EVERY task from project-tasks/ MUST pass all 5 dev flow gates. Sherlock review is NOT optional.**
+15. **"User said go fast" does NOT mean "skip quality gates." It means "don't stop to ask between tasks."**

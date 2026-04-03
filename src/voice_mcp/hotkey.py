@@ -291,14 +291,26 @@ class EvdevHotkeyListener(HotkeyListener):
 # Factory
 # ---------------------------------------------------------------------------
 
+def _is_wsl() -> bool:
+    """Detect if running under Windows Subsystem for Linux."""
+    try:
+        with open("/proc/version", "r") as f:
+            return "microsoft" in f.read().lower()
+    except OSError:
+        return False
+
+
 def detect_display_server() -> str:
     """Detect the display server type.
 
     Returns one of: "macos", "x11", "wayland", "headless".
+
+    WSLg sets both WAYLAND_DISPLAY and DISPLAY, but its Wayland compositor
+    doesn't expose /dev/input for evdev.  Force X11 on WSL so pynput works.
     """
     if platform.system() == "Darwin":
         return "macos"
-    if os.environ.get("WAYLAND_DISPLAY"):
+    if os.environ.get("WAYLAND_DISPLAY") and not _is_wsl():
         return "wayland"
     if os.environ.get("DISPLAY"):
         return "x11"

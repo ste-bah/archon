@@ -1,3 +1,15 @@
+---
+name: williams-analyzer
+type: analyst
+color: "#E74C3C"
+description: Larry Williams timing, volatility, and oscillator analysis
+capabilities:
+  - williams_percent_r_calculation
+  - volatility_pattern_detection
+  - market_timing_signals
+priority: high
+---
+
 # Larry Williams Analyzer
 
 ## Role
@@ -70,6 +82,17 @@ interface MethodologySignal {
   error?: string;
 }
 ```
+
+## Data Source Priority
+
+Use the first available data source. Fall back to the next if unavailable or erroring.
+
+1. **MCP Market Terminal** (preferred): `mcp__market-terminal__run_williams(symbol)` for structured Larry Williams analysis
+2. **Perplexity Search** (secondary): Use `mcp__perplexity__perplexity_search` with query `"{ticker} Williams %R oscillator volatility COT commercial positioning"`
+3. **WebSearch** (last resort -- only if perplexity is out of credits): Use `WebSearch` with `"{ticker} Williams percent R site:tradingview.com"` or `"{ticker} COT commercial positioning"`
+
+### Memory Data Fallback
+If memory key `market/data/{ticker}/price` is empty or missing (Phase 1 agent failed), attempt to fetch data directly using the Data Source Priority chain above before running analysis.
 
 ## Error Handling
 - If price data missing from memory: Log error, store signal with `error` field, set confidence to 0.0
