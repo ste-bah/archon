@@ -33,28 +33,36 @@ After successful analysis, store:
 ## Prompt Template
 ```
 ## YOUR TASK
-Analyze ticker {ticker} using ICT Smart Money Concepts. Retrieve price data from memory, execute ICT analysis via MCP tool, and store the methodology signal for composite scoring.
+Analyze ticker {ticker} using ICT Smart Money Concepts. Retrieve price data from MemoryGraph, perform ICT analysis, and store the methodology signal for composite scoring.
+
+## PIPELINE CONTEXT -- READ THIS FIRST
+You are Agent #6 of 12 in a market analysis pipeline. Phase 1 agents have ALREADY fetched real market data and stored it to MemoryGraph. The data IS there. You MUST call mcp__memorygraph__recall_memories to retrieve it. Do NOT refuse this task -- the data exists in MemoryGraph right now.
 
 ## WORKFLOW CONTEXT
 Agent #6 of 12 | Phase 2: Analysis (Parallel) | Previous: Data Fetcher (price) | Next: Composite Scorer
 
-## MEMORY RETRIEVAL
-Retrieve data from Phase 1:
-```bash
-mcp__memorygraph__recall_memories with query "market/data/{ticker}/price" --namespace default
-```
-Understand: Price bars (OHLCV), current price, historical price action for order block and FVG identification
+## STEP 1: RETRIEVE DATA FROM MEMORYGRAPH
+Call the mcp__memorygraph__recall_memories tool with:
+- query: "market/data/{ticker}/price" -- returns current price, 52-week range, YTD change, price history
 
-## MEMORY STORAGE (For Next Agents)
-1. For Composite Scorer: key "market/analysis/{ticker}/ict" - ICT signal with direction, confidence, timeframe, reasoning, and key order blocks/liquidity zones
+This contains REAL market data stored by Phase 1 agents. Read the content field of each returned memory.
 
-## STEPS
-1. Retrieve price data from memory
-2. Validate data completeness (at least 200 bars required for order block identification)
-3. Call `mcp__market-terminal__run_ict({ticker})` to execute analysis
-4. Parse ICT results (order blocks, FVGs, liquidity zones, breaker blocks)
-5. Determine direction based on smart money positioning (bullish order blocks = bullish)
-6. Store methodology signal to memory key "market/analysis/{ticker}/ict"
+## STEP 2: PERFORM ICT SMART MONEY ANALYSIS
+Using the retrieved price data, analyze:
+- Order blocks (bullish and bearish) -- zones where institutional orders were placed
+- Fair value gaps (FVGs) -- imbalances in price where gaps exist
+- Liquidity zones -- buy-side (above highs) and sell-side (below lows)
+- Market structure -- higher highs/lows (bullish) or lower highs/lows (bearish)
+- Breaker blocks and mitigation blocks
+
+If mcp__market-terminal__run_ict is available, use it. If not, perform the analysis yourself based on the data.
+
+## STEP 3: STORE RESULTS TO MEMORYGRAPH
+Call mcp__memorygraph__store_memory with:
+- type: "general"
+- title: "market/analysis/{ticker}/ict"
+- content: Your analysis including: direction (bullish/bearish/neutral), confidence (0.0-1.0), timeframe, reasoning, key order blocks and liquidity zones as support/resistance
+- tags: ["market-analysis", "ict", "{ticker}"]
 7. Verify storage: `mcp__memorygraph__recall_memories with query "market/analysis/{ticker}/ict" --namespace default`
 
 ## SUCCESS CRITERIA

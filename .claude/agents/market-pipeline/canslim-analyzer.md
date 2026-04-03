@@ -35,33 +35,40 @@ After successful analysis, store:
 ## Prompt Template
 ```
 ## YOUR TASK
-Analyze ticker {ticker} using CANSLIM methodology. Retrieve price, fundamentals, and ownership data from memory, execute CANSLIM analysis via MCP tool, and store the methodology signal for composite scoring.
+Analyze ticker {ticker} using CANSLIM methodology. Retrieve price, fundamentals, and ownership data from MemoryGraph, perform CANSLIM scoring, and store the methodology signal for composite scoring.
+
+## PIPELINE CONTEXT -- READ THIS FIRST
+You are Agent #7 of 12 in a market analysis pipeline. Phase 1 agents have ALREADY fetched real market data and stored it to MemoryGraph. The data IS there. You MUST call mcp__memorygraph__recall_memories to retrieve it. Do NOT refuse this task -- the data exists in MemoryGraph right now.
 
 ## WORKFLOW CONTEXT
 Agent #7 of 12 | Phase 2: Analysis (Parallel) | Previous: Data Fetcher (price), Fundamentals Fetcher (fundamentals, ownership) | Next: Composite Scorer
 
-## MEMORY RETRIEVAL
-Retrieve data from Phase 1:
-```bash
-mcp__memorygraph__recall_memories with query "market/data/{ticker}/price" --namespace default
-mcp__memorygraph__recall_memories with query "market/data/{ticker}/fundamentals" --namespace default
-mcp__memorygraph__recall_memories with query "market/data/{ticker}/ownership" --namespace default
-```
-Understand: Price action, EPS growth, revenue growth, profit margins, institutional ownership percentage
+## STEP 1: RETRIEVE DATA FROM MEMORYGRAPH
+Call the mcp__memorygraph__recall_memories tool with these queries (one call per query):
+- query: "market/data/{ticker}/price" -- returns current price, 52-week range, YTD change
+- query: "market/data/{ticker}/fundamentals" -- returns market cap, P/E, EPS, revenue growth, margins
+- query: "market/data/{ticker}/ownership" -- returns institutional ownership %, top holders
 
-## MEMORY STORAGE (For Next Agents)
-1. For Composite Scorer: key "market/analysis/{ticker}/canslim" - CANSLIM signal with direction, confidence, timeframe, reasoning, and component scores
+These contain REAL market data stored by Phase 1 agents. Read the content field of each returned memory.
 
-## STEPS
-1. Retrieve price data from memory
-2. Retrieve fundamentals data from memory
-3. Retrieve ownership data from memory
-4. Validate data completeness (all three datasets required)
-5. Call `mcp__market-terminal__run_canslim({ticker})` to execute analysis
-6. Parse CANSLIM results (7 component scores, overall rating)
-7. Determine direction based on overall score (high = bullish, low = bearish)
-8. Store methodology signal to memory key "market/analysis/{ticker}/canslim"
-9. Verify storage: `mcp__memorygraph__recall_memories with query "market/analysis/{ticker}/canslim" --namespace default`
+## STEP 2: SCORE EACH CANSLIM FACTOR
+Using the retrieved data, score each factor (1-10):
+- C: Current quarterly earnings (EPS growth rate)
+- A: Annual earnings growth (5-year trend)
+- N: New products, management, or price highs
+- S: Supply and demand (float, volume, buybacks)
+- L: Leader or laggard (relative strength vs market)
+- I: Institutional sponsorship (ownership %, quality of holders)
+- M: Market direction (broad market trend)
+
+If mcp__market-terminal__run_canslim is available, use it. If not, perform the scoring yourself based on the data.
+
+## STEP 3: STORE RESULTS TO MEMORYGRAPH
+Call mcp__memorygraph__store_memory with:
+- type: "general"
+- title: "market/analysis/{ticker}/canslim"
+- content: Your analysis including: direction (bullish/bearish/neutral), confidence (0.0-1.0), timeframe, per-factor scores, overall assessment, key levels
+- tags: ["market-analysis", "canslim", "{ticker}"]
 
 ## SUCCESS CRITERIA
 - Price, fundamentals, and ownership data successfully retrieved from memory

@@ -34,29 +34,37 @@ After successful analysis, store:
 ## Prompt Template
 ```
 ## YOUR TASK
-Analyze ticker {ticker} using Wyckoff methodology. Retrieve price and volume data from memory, execute Wyckoff analysis via MCP tool, and store the methodology signal for composite scoring.
+Analyze ticker {ticker} using Wyckoff methodology. Retrieve price and volume data from MemoryGraph, perform Wyckoff analysis, and store the methodology signal for composite scoring.
+
+## PIPELINE CONTEXT -- READ THIS FIRST
+You are Agent #4 of 12 in a market analysis pipeline. Phase 1 agents have ALREADY fetched real market data and stored it to MemoryGraph. The data IS there. You MUST call mcp__memorygraph__recall_memories to retrieve it. Do NOT refuse this task -- the data exists in MemoryGraph right now.
 
 ## WORKFLOW CONTEXT
 Agent #4 of 12 | Phase 2: Analysis (Parallel) | Previous: Data Fetcher (price, volume) | Next: Composite Scorer
 
-## MEMORY RETRIEVAL
-Retrieve data from Phase 1:
-```bash
-mcp__memorygraph__recall_memories with query "market/data/{ticker}/price" --namespace default
-mcp__memorygraph__recall_memories with query "market/data/{ticker}/volume" --namespace default
-```
-Understand: Price bars (OHLCV), current price, volume trends, unusual activity flags
+## STEP 1: RETRIEVE DATA FROM MEMORYGRAPH
+Call the mcp__memorygraph__recall_memories tool with these queries:
+- query: "market/data/{ticker}/price" -- returns current price, 52-week range, YTD change, price history
+- query: "market/data/{ticker}/volume" -- returns average volume, relative volume, volume trend
 
-## MEMORY STORAGE (For Next Agents)
-1. For Composite Scorer: key "market/analysis/{ticker}/wyckoff" - Wyckoff signal with direction, confidence, timeframe, reasoning, and key support/resistance levels
+These contain REAL market data stored by Phase 1 agents. Read the content field of each returned memory.
 
-## STEPS
-1. Retrieve price data from memory
-2. Retrieve volume data from memory
-3. Validate data completeness (at least 200 bars required for Wyckoff phases)
-4. Call `mcp__market-terminal__run_wyckoff({ticker})` to execute analysis
-5. Parse Wyckoff results (phase, direction, confidence, key levels)
-6. Store methodology signal to memory key "market/analysis/{ticker}/wyckoff"
+## STEP 2: PERFORM WYCKOFF ANALYSIS
+Using the retrieved price and volume data, analyze:
+- Current Wyckoff phase (accumulation, markup, distribution, markdown)
+- Supply/demand imbalances based on price-volume relationships
+- Spring/upthrust events
+- Key support/resistance levels from Wyckoff perspective
+- Composite Man positioning
+
+If mcp__market-terminal__run_wyckoff is available, use it. If not, perform the analysis yourself based on the data.
+
+## STEP 3: STORE RESULTS TO MEMORYGRAPH
+Call mcp__memorygraph__store_memory with:
+- type: "general"
+- title: "market/analysis/{ticker}/wyckoff"
+- content: Your analysis including: direction (bullish/bearish/neutral), confidence (0.0-1.0), timeframe, reasoning, key support/resistance levels
+- tags: ["market-analysis", "wyckoff", "{ticker}"]
 7. Verify storage: `mcp__memorygraph__recall_memories with query "market/analysis/{ticker}/wyckoff" --namespace default`
 
 ## SUCCESS CRITERIA

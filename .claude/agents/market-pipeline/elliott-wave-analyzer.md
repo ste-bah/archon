@@ -33,28 +33,36 @@ After successful analysis, store:
 ## Prompt Template
 ```
 ## YOUR TASK
-Analyze ticker {ticker} using Elliott Wave Theory. Retrieve price data from memory, execute Elliott Wave analysis via MCP tool, and store the methodology signal for composite scoring.
+Analyze ticker {ticker} using Elliott Wave Theory. Retrieve price data from MemoryGraph, perform Elliott Wave analysis, and store the methodology signal for composite scoring.
+
+## PIPELINE CONTEXT -- READ THIS FIRST
+You are Agent #5 of 12 in a market analysis pipeline. Phase 1 agents have ALREADY fetched real market data and stored it to MemoryGraph. The data IS there. You MUST call mcp__memorygraph__recall_memories to retrieve it. Do NOT refuse this task -- the data exists in MemoryGraph right now.
 
 ## WORKFLOW CONTEXT
 Agent #5 of 12 | Phase 2: Analysis (Parallel) | Previous: Data Fetcher (price) | Next: Composite Scorer
 
-## MEMORY RETRIEVAL
-Retrieve data from Phase 1:
-```bash
-mcp__memorygraph__recall_memories with query "market/data/{ticker}/price" --namespace default
-```
-Understand: Price bars (OHLCV), current price, historical trends for wave pattern identification
+## STEP 1: RETRIEVE DATA FROM MEMORYGRAPH
+Call the mcp__memorygraph__recall_memories tool with:
+- query: "market/data/{ticker}/price" -- returns current price, 52-week range, YTD change, price history
 
-## MEMORY STORAGE (For Next Agents)
-1. For Composite Scorer: key "market/analysis/{ticker}/elliott" - Elliott Wave signal with direction, confidence, timeframe, reasoning, and fibonacci levels
+This contains REAL market data stored by Phase 1 agents. Read the content field of each returned memory.
 
-## STEPS
-1. Retrieve price data from memory
-2. Validate data completeness (at least 250 bars required for reliable wave counts)
-3. Call `mcp__market-terminal__run_elliott({ticker})` to execute analysis
-4. Parse Elliott Wave results (wave count, current position, fibonacci levels)
-5. Determine direction based on wave structure (impulse up = bullish, corrective = bearish)
-6. Store methodology signal to memory key "market/analysis/{ticker}/elliott"
+## STEP 2: PERFORM ELLIOTT WAVE ANALYSIS
+Using the retrieved price data, analyze:
+- Current wave count (which wave are we in?)
+- Impulse vs corrective structure
+- Fibonacci retracement levels (23.6%, 38.2%, 50%, 61.8%)
+- Fibonacci extension levels for targets
+- Wave degree and trend direction
+
+If mcp__market-terminal__run_elliott is available, use it. If not, perform the analysis yourself based on the data.
+
+## STEP 3: STORE RESULTS TO MEMORYGRAPH
+Call mcp__memorygraph__store_memory with:
+- type: "general"
+- title: "market/analysis/{ticker}/elliott"
+- content: Your analysis including: direction (bullish/bearish/neutral), confidence (0.0-1.0), timeframe, reasoning, fibonacci levels as support/resistance
+- tags: ["market-analysis", "elliott-wave", "{ticker}"]
 7. Verify storage: `mcp__memorygraph__recall_memories with query "market/analysis/{ticker}/elliott" --namespace default`
 
 ## SUCCESS CRITERIA

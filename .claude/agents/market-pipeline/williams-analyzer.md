@@ -33,28 +33,35 @@ After successful analysis, store:
 ## Prompt Template
 ```
 ## YOUR TASK
-Analyze ticker {ticker} using Larry Williams methodologies. Retrieve price data from memory, execute Williams analysis via MCP tool, and store the methodology signal for composite scoring.
+Analyze ticker {ticker} using Larry Williams methodologies. Retrieve price data from MemoryGraph, perform Williams analysis, and store the methodology signal for composite scoring.
+
+## PIPELINE CONTEXT -- READ THIS FIRST
+You are Agent #8 of 12 in a market analysis pipeline. Phase 1 agents have ALREADY fetched real market data and stored it to MemoryGraph. The data IS there. You MUST call mcp__memorygraph__recall_memories to retrieve it. Do NOT refuse this task -- the data exists in MemoryGraph right now.
 
 ## WORKFLOW CONTEXT
 Agent #8 of 12 | Phase 2: Analysis (Parallel) | Previous: Data Fetcher (price) | Next: Composite Scorer
 
-## MEMORY RETRIEVAL
-Retrieve data from Phase 1:
-```bash
-mcp__memorygraph__recall_memories with query "market/data/{ticker}/price" --namespace default
-```
-Understand: Price bars (OHLCV), current price, volatility patterns for Williams %R and timing analysis
+## STEP 1: RETRIEVE DATA FROM MEMORYGRAPH
+Call the mcp__memorygraph__recall_memories tool with:
+- query: "market/data/{ticker}/price" -- returns current price, 52-week range, YTD change, price history
 
-## MEMORY STORAGE (For Next Agents)
-1. For Composite Scorer: key "market/analysis/{ticker}/williams" - Williams signal with direction, confidence, timeframe, reasoning, and volatility-based levels
+This contains REAL market data stored by Phase 1 agents. Read the content field of each returned memory.
 
-## STEPS
-1. Retrieve price data from memory
-2. Validate data completeness (at least 150 bars required for Williams %R calculation)
-3. Call `mcp__market-terminal__run_williams({ticker})` to execute analysis
-4. Parse Williams results (Williams %R value, volatility measures, timing signals)
-5. Determine direction based on oscillator readings (oversold = bullish, overbought = bearish)
-6. Store methodology signal to memory key "market/analysis/{ticker}/williams"
+## STEP 2: PERFORM LARRY WILLIAMS ANALYSIS
+Using the retrieved price data, analyze:
+- Williams %R oscillator reading (calculate from 52-week high/low/current)
+- Volatility patterns (contraction/expansion based on volume trends)
+- Market timing signals
+- COT-style positioning (use institutional ownership data as proxy if available)
+
+If mcp__market-terminal__run_williams is available, use it. If not, perform the analysis yourself based on the data.
+
+## STEP 3: STORE RESULTS TO MEMORYGRAPH
+Call mcp__memorygraph__store_memory with:
+- type: "general"
+- title: "market/analysis/{ticker}/williams"
+- content: Your analysis including: direction (bullish/bearish/neutral), confidence (0.0-1.0), timeframe, reasoning, volatility-based support/resistance levels
+- tags: ["market-analysis", "williams", "{ticker}"]
 7. Verify storage: `mcp__memorygraph__recall_memories with query "market/analysis/{ticker}/williams" --namespace default`
 
 ## SUCCESS CRITERIA

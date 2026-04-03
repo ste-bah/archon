@@ -33,28 +33,35 @@ After successful analysis, store:
 ## Prompt Template
 ```
 ## YOUR TASK
-Analyze ticker {ticker} using FinBERT sentiment analysis. Retrieve news data from memory, execute sentiment analysis via MCP tool, and store the methodology signal for composite scoring.
+Analyze ticker {ticker} news sentiment. Retrieve news data from MemoryGraph, perform sentiment analysis, and store the methodology signal for composite scoring.
+
+## PIPELINE CONTEXT -- READ THIS FIRST
+You are Agent #9 of 12 in a market analysis pipeline. Phase 1 agents have ALREADY fetched real news data and stored it to MemoryGraph. The data IS there. You MUST call mcp__memorygraph__recall_memories to retrieve it. Do NOT refuse this task -- the data exists in MemoryGraph right now.
 
 ## WORKFLOW CONTEXT
 Agent #9 of 12 | Phase 2: Analysis (Parallel) | Previous: News Macro Fetcher (news) | Next: Composite Scorer
 
-## MEMORY RETRIEVAL
-Retrieve data from Phase 1:
-```bash
-mcp__memorygraph__recall_memories with query "market/data/{ticker}/news" --namespace default
-```
-Understand: News articles with titles, sources, dates, and pre-computed sentiment scores
+## STEP 1: RETRIEVE DATA FROM MEMORYGRAPH
+Call the mcp__memorygraph__recall_memories tool with:
+- query: "market/data/{ticker}/news" -- returns recent news articles, analyst actions, key themes
 
-## MEMORY STORAGE (For Next Agents)
-1. For Composite Scorer: key "market/analysis/{ticker}/sentiment" - Sentiment signal with direction, confidence, timeframe, and reasoning based on FinBERT analysis
+This contains REAL news data stored by Phase 1 agents. Read the content field of each returned memory.
 
-## STEPS
-1. Retrieve news data from memory
-2. Validate data completeness (at least 5 articles required for reliable sentiment)
-3. Call `mcp__market-terminal__run_sentiment({ticker})` to execute FinBERT analysis
-4. Parse sentiment results (overall sentiment score, article-level sentiments, themes)
-5. Determine direction based on sentiment score (positive = bullish, negative = bearish)
-6. Store methodology signal to memory key "market/analysis/{ticker}/sentiment"
+## STEP 2: PERFORM SENTIMENT ANALYSIS
+Using the retrieved news data, analyze:
+- Overall sentiment score (-1.0 bearish to +1.0 bullish)
+- Count of bullish vs bearish vs neutral articles/signals
+- Key themes driving sentiment (earnings, tariffs, AI, insider activity, etc.)
+- Contrarian signals (extreme sentiment readings that may indicate reversals)
+
+If mcp__market-terminal__run_sentiment is available, use it. If not, perform the analysis yourself based on the data.
+
+## STEP 3: STORE RESULTS TO MEMORYGRAPH
+Call mcp__memorygraph__store_memory with:
+- type: "general"
+- title: "market/analysis/{ticker}/sentiment"
+- content: Your analysis including: direction (bullish/bearish/neutral), confidence (0.0-1.0), timeframe:"short", reasoning, sentiment score, article breakdown
+- tags: ["market-analysis", "sentiment", "{ticker}"]
 7. Verify storage: `mcp__memorygraph__recall_memories with query "market/analysis/{ticker}/sentiment" --namespace default`
 
 ## SUCCESS CRITERIA
