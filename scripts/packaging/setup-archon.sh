@@ -40,7 +40,7 @@ NC='\033[0m' # No Color
 NODE_VERSION="22"
 PYTHON_MIN_VERSION="3.11"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-TOTAL_STEPS=18
+TOTAL_STEPS=19
 
 # Parse arguments
 SKIP_NVM=false
@@ -911,6 +911,96 @@ else
     else
         echo -e "${YELLOW}  Skipped: push-to-talk service file not found${NC}"
     fi
+fi
+
+#===============================================================================
+# STEP 12f: Install Claude Code Behavioural Enforcement Hooks
+#===============================================================================
+echo -e "${YELLOW}[12f/${TOTAL_STEPS}] Installing Claude Code enforcement hooks...${NC}"
+
+CLAUDE_HOOKS_SRC="$PROJECT_DIR/scripts/claude-hooks"
+CLAUDE_HOOKS_DST="$HOME/.claude/hooks"
+CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+
+mkdir -p "$CLAUDE_HOOKS_DST"
+
+# Copy each hook if present
+HOOKS_INSTALLED=()
+for hook in block-fake-done.sh limit-batch-size.sh require-reference-read.sh force-self-audit.sh; do
+    if [ -f "$CLAUDE_HOOKS_SRC/$hook" ]; then
+        cp "$CLAUDE_HOOKS_SRC/$hook" "$CLAUDE_HOOKS_DST/$hook"
+        chmod +x "$CLAUDE_HOOKS_DST/$hook"
+        HOOKS_INSTALLED+=("$hook")
+        echo -e "${GREEN}  Installed $hook${NC}"
+    fi
+done
+
+# Register hooks in ~/.claude/settings.json (merge with existing config)
+if [ ${#HOOKS_INSTALLED[@]} -gt 0 ] && command -v python3 >/dev/null 2>&1; then
+    python3 - <<PYEOF
+import json, os, sys
+
+settings_path = os.path.expanduser("$CLAUDE_SETTINGS")
+hooks_dst = os.path.expanduser("$CLAUDE_HOOKS_DST")
+
+# Load existing or create new
+if os.path.exists(settings_path):
+    try:
+        with open(settings_path) as f:
+            settings = json.load(f)
+    except Exception:
+        settings = {}
+else:
+    settings = {}
+
+# Ensure hooks.PreToolUse exists
+settings.setdefault("hooks", {})
+settings["hooks"].setdefault("PreToolUse", [])
+
+# Define the hook entries we want to ensure are present
+wanted = [
+    {
+        "matcher": "Write|Edit",
+        "hooks": [
+            {"type": "command", "command": f"{hooks_dst}/block-fake-done.sh"},
+            {"type": "command", "command": f"{hooks_dst}/require-reference-read.sh"},
+            {"type": "command", "command": f"{hooks_dst}/force-self-audit.sh"},
+        ],
+    },
+    {
+        "matcher": "Agent",
+        "hooks": [
+            {"type": "command", "command": f"{hooks_dst}/limit-batch-size.sh"},
+        ],
+    },
+]
+
+# Remove any existing entries pointing to our hook paths, then append ours
+our_commands = set()
+for entry in wanted:
+    for h in entry["hooks"]:
+        our_commands.add(h["command"])
+
+cleaned = []
+for entry in settings["hooks"]["PreToolUse"]:
+    filtered_hooks = [
+        h for h in entry.get("hooks", [])
+        if h.get("command") not in our_commands
+    ]
+    if filtered_hooks:
+        new_entry = dict(entry)
+        new_entry["hooks"] = filtered_hooks
+        cleaned.append(new_entry)
+settings["hooks"]["PreToolUse"] = cleaned + wanted
+
+with open(settings_path, "w") as f:
+    json.dump(settings, f, indent=2)
+
+print(f"  Registered hooks in {settings_path}")
+PYEOF
+    echo -e "${GREEN}  Enforcement hooks registered in ~/.claude/settings.json${NC}"
+else
+    echo -e "${YELLOW}  Skipped: no hooks to install or python3 not found${NC}"
 fi
 
 #===============================================================================
