@@ -208,6 +208,15 @@
         ]
       },
       {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/agent-type-enforcer.sh\" ] && cat | \"$ROOT/.claude/hooks/agent-type-enforcer.sh\" || echo \"{\\\"decision\\\": \\\"allow\\\"}\"'"
+          }
+        ]
+      },
+      {
         "matcher": "TaskUpdate",
         "hooks": [
           {
