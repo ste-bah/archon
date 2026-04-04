@@ -1,41 +1,56 @@
 #!/usr/bin/env bash
 # Pass a specific dev flow gate for a task.
-# Usage: ./scripts/dev-flow-pass-gate.sh TASK-CLI-XXX gate-name "evidence" /path/to/work/dir
+# Usage: ./scripts/dev-flow-pass-gate.sh TASK-XXX gate-name "evidence" [/path/to/work/dir]
+#
+# If work dir is omitted, uses git repo root.
 #
 # Gate names (must be passed in order):
-#   01-tests-written-first    — Test files exist before implementation
-#   02-implementation-complete — Code written and compiles
-#   03-tests-passing           — All tests pass (include test count)
-#   04-live-smoke-test         — Feature actually invoked end-to-end
-#   05-sherlock-review         — Sherlock agent reviewed, verdict included
+#   01-tests-written-first      — Test files exist before implementation
+#   02-implementation-complete   — Code written and compiles
+#   03-sherlock-code-review      — Sherlock adversarial review of implementation
+#   04-tests-passing             — All tests pass (include test count)
+#   05-live-smoke-test           — Feature actually invoked end-to-end
+#   06-sherlock-final-review     — Sherlock final review: integration + wiring
 #
-# Gate 4 enforcement:
+# Gate 3 enforcement:
+#   Evidence MUST contain "APPROVED" or "PASS" (from Sherlock verdict).
+#   If evidence contains "REJECTED" or "FAIL", the gate is BLOCKED.
+#
+# Gate 5 enforcement:
 #   Evidence is checked for fraud patterns. If the evidence looks like
 #   "tests pass" or "library crate" instead of actual binary execution
 #   proof, the gate is BLOCKED.
 #
-#   Valid Gate 4 evidence MUST contain one of:
-#     - A command that was run and its output
-#     - "WIRING_VERIFIED:" prefix with grep/call-chain proof
-#     - A path to a screenshot or log file
-#
-#   Blocked phrases (case-insensitive):
-#     "library crate", "binary builds", "wiring happens",
-#     "tests pass", "API surface", "wiring in CLI-",
-#     "wiring in TASK-", "not yet wired", "deferred to"
+# Gate 6 enforcement:
+#   Same as Gate 3 — must contain Sherlock verdict.
 
 set -euo pipefail
 
-TASK_ID="${1:?Usage: dev-flow-pass-gate.sh TASK-CLI-XXX gate-name 'evidence' /path/to/work/dir}"
-GATE_NAME="${2:?Provide gate name (e.g., 05-sherlock-review)}"
+TASK_ID="${1:?Usage: dev-flow-pass-gate.sh TASK-XXX gate-name 'evidence' [/path/to/work/dir]}"
+GATE_NAME="${2:?Provide gate name (e.g., 03-sherlock-code-review)}"
 EVIDENCE="${3:?Provide evidence string}"
-WORK_DIR="${4:?Provide work directory}"
+
+# Work dir: explicit arg, or git root, or cwd
+if [ -n "${4:-}" ]; then
+    WORK_DIR="$4"
+elif ROOT=$(git rev-parse --show-toplevel 2>/dev/null); then
+    WORK_DIR="$ROOT"
+else
+    WORK_DIR="$(pwd)"
+fi
 
 GATE_DIR="${WORK_DIR}/.gates/${TASK_ID}"
 GATE_FILE="${GATE_DIR}/${GATE_NAME}.passed"
 
 # Validate gate name
-VALID_GATES=("01-tests-written-first" "02-implementation-complete" "03-tests-passing" "04-live-smoke-test" "05-sherlock-review")
+VALID_GATES=(
+    "01-tests-written-first"
+    "02-implementation-complete"
+    "03-sherlock-code-review"
+    "04-tests-passing"
+    "05-live-smoke-test"
+    "06-sherlock-final-review"
+)
 VALID=false
 for g in "${VALID_GATES[@]}"; do
     if [[ "$g" == "$GATE_NAME" ]]; then
@@ -69,13 +84,46 @@ if [[ "$GATE_NUM" != "01" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Gate 4 fraud detection — block evidence that doesn't prove binary execution
+# Gate 3 + Gate 6: Sherlock verdict enforcement
 # ---------------------------------------------------------------------------
-if [[ "$GATE_NAME" == "04-live-smoke-test" ]]; then
+if [[ "$GATE_NAME" == "03-sherlock-code-review" || "$GATE_NAME" == "06-sherlock-final-review" ]]; then
+    EVIDENCE_UPPER=$(echo "$EVIDENCE" | tr '[:lower:]' '[:upper:]')
+
+    # Must contain a positive verdict
+    if [[ "$EVIDENCE_UPPER" == *"REJECTED"* || "$EVIDENCE_UPPER" == *"GUILTY"* ]]; then
+        echo ""
+        echo "================================================================"
+        echo "  SHERLOCK GATE BLOCKED — NEGATIVE VERDICT"
+        echo "================================================================"
+        echo ""
+        echo "  Evidence contains a rejection/failure verdict."
+        echo "  Fix the findings and re-run Sherlock before passing this gate."
+        echo ""
+        echo "================================================================"
+        exit 1
+    fi
+
+    if [[ "$EVIDENCE_UPPER" != *"APPROVED"* && "$EVIDENCE_UPPER" != *"PASS"* && "$EVIDENCE_UPPER" != *"INNOCENT"* ]]; then
+        echo ""
+        echo "================================================================"
+        echo "  SHERLOCK GATE BLOCKED — NO VERDICT FOUND"
+        echo "================================================================"
+        echo ""
+        echo "  Evidence must contain Sherlock's verdict: APPROVED, PASS, or INNOCENT."
+        echo "  Run the Sherlock adversarial review and include the verdict."
+        echo ""
+        echo "================================================================"
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Gate 5: Live smoke test fraud detection
+# ---------------------------------------------------------------------------
+if [[ "$GATE_NAME" == "05-live-smoke-test" ]]; then
     EVIDENCE_LOWER=$(echo "$EVIDENCE" | tr '[:upper:]' '[:lower:]')
 
-    # Blocked phrases — these indicate the feature wasn't actually tested
-    # in a running binary. Add new patterns here as they're discovered.
+    # Blocked phrases — indicate feature wasn't tested in running binary
     FRAUD_PATTERNS=(
         "library crate"
         "binary builds"
@@ -91,18 +139,21 @@ if [[ "$GATE_NAME" == "04-live-smoke-test" ]]; then
         "integration work"
         "same public api"
         "library-only"
+        "n/a"
+        "not applicable"
+        "skip"
     )
 
     for pattern in "${FRAUD_PATTERNS[@]}"; do
         if [[ "$EVIDENCE_LOWER" == *"$pattern"* ]]; then
             echo ""
             echo "================================================================"
-            echo "  GATE 4 BLOCKED — FRAUD PATTERN DETECTED"
+            echo "  GATE 5 BLOCKED — FRAUD PATTERN DETECTED"
             echo "================================================================"
             echo ""
             echo "  Evidence contains: \"${pattern}\""
             echo ""
-            echo "  Gate 4 (live-smoke-test) requires PROOF that the feature"
+            echo "  Gate 5 (live-smoke-test) requires PROOF that the feature"
             echo "  works in a running binary. Not that tests pass. Not that"
             echo "  it compiles. Not that wiring happens later."
             echo ""
@@ -111,20 +162,12 @@ if [[ "$GATE_NAME" == "04-live-smoke-test" ]]; then
             echo "    2. WIRING_VERIFIED: <grep proof that binary calls the code>"
             echo "    3. Path to a screenshot or log showing the feature working"
             echo ""
-            echo "  If this is a library-only module with no user-facing behavior,"
-            echo "  you MUST wire it into the binary BEFORE passing Gate 4."
-            echo ""
-            echo "  DO NOT mark library modules as smoke-tested."
-            echo "  DO NOT defer wiring to another task."
-            echo "  A module not called from the binary is NOT DONE."
-            echo ""
             echo "================================================================"
             exit 1
         fi
     done
 
     # Require positive evidence — must contain at least one proof indicator
-    PROOF_FOUND=false
     PROOF_INDICATORS=(
         "wiring_verified:"
         "ran:"
@@ -141,8 +184,10 @@ if [[ "$GATE_NAME" == "04-live-smoke-test" ]]; then
         "exercised:"
         "verified by running"
         "invoked"
+        "archon"
     )
 
+    PROOF_FOUND=false
     for indicator in "${PROOF_INDICATORS[@]}"; do
         if [[ "$EVIDENCE_LOWER" == *"$indicator"* ]]; then
             PROOF_FOUND=true
@@ -153,19 +198,14 @@ if [[ "$GATE_NAME" == "04-live-smoke-test" ]]; then
     if [[ "$PROOF_FOUND" != "true" ]]; then
         echo ""
         echo "================================================================"
-        echo "  GATE 4 WARNING — NO EXECUTION PROOF DETECTED"
+        echo "  GATE 5 BLOCKED — NO EXECUTION PROOF"
         echo "================================================================"
         echo ""
         echo "  Evidence doesn't contain recognizable execution proof."
-        echo "  Expected one of: a command, output, screenshot path,"
-        echo "  WIRING_VERIFIED:, or description of invoking the feature."
-        echo ""
-        echo "  Proceeding anyway, but this evidence is SUSPECT."
-        echo "  If you're passing a library module without binary proof,"
-        echo "  you WILL be caught by Sherlock or the next review."
+        echo "  Must include: a command, output, screenshot, or WIRING_VERIFIED."
         echo ""
         echo "================================================================"
-        # Warning only — don't block, but make it loud
+        exit 1
     fi
 fi
 

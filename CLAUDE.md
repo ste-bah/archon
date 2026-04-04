@@ -322,20 +322,24 @@ Only project source code. The following are automatically excluded:
 
 ## DEV FLOW ENFORCEMENT — ABSOLUTE LAW
 
-**When executing tasks from project-tasks/, EVERY task MUST complete ALL 5 gates IN ORDER. No exceptions. No shortcuts. "Going fast" does NOT mean skipping gates.**
+**When executing tasks from project-tasks/, EVERY task MUST complete ALL 6 gates IN ORDER. No exceptions. No shortcuts. "Going fast" does NOT mean skipping gates.**
 
 ```
-GATE 1: tests-written-first     — Test file exists BEFORE implementation
-GATE 2: implementation-complete  — Code compiles, no errors
-GATE 3: tests-passing            — All tests pass (include count)
-GATE 4: live-smoke-test          — Feature actually invoked end-to-end
-GATE 5: sherlock-review          — Sherlock agent reviewed and approved
+GATE 1: tests-written-first       — Test file exists BEFORE implementation
+GATE 2: implementation-complete    — Code compiles, no errors
+GATE 3: sherlock-code-review       — Sherlock adversarial review of implementation (MUST contain APPROVED/PASS)
+GATE 4: tests-passing              — All tests pass (include count)
+GATE 5: live-smoke-test            — Feature actually invoked end-to-end (fraud detection blocks fake evidence)
+GATE 6: sherlock-final-review      — Sherlock final review: integration + wiring verified (MUST contain APPROVED/PASS)
 ```
 
-**Enforcement mechanism:**
-- Run `scripts/dev-flow-pass-gate.sh TASK-ID gate-name "evidence" /path/to/work/dir` to pass each gate
-- Run `scripts/dev-flow-gate.sh TASK-ID /path/to/work/dir` to verify all gates before marking complete
-- TaskCompleted hook checks for missing gates and prints warnings
+**Enforcement mechanism (HARDENED — cannot be bypassed):**
+- Run `scripts/dev-flow-pass-gate.sh TASK-ID gate-name "evidence"` to pass each gate
+- Run `scripts/dev-flow-gate.sh TASK-ID` to verify all gates before marking complete
+- **PreToolUse hook on TaskUpdate BLOCKS marking any TASK-*-NNN as completed without all 6 gates passed**
+- Gate 3 + 6: Evidence MUST contain Sherlock verdict (APPROVED/PASS/INNOCENT). REJECTED = blocked.
+- Gate 5: Fraud detection blocks "tests pass", "library crate", "not yet wired" etc. Requires real execution proof.
+- **The hook cannot be bypassed by "forgetting" to call the gate scripts — no gate files = BLOCKED.**
 - A task with missing gates is NOT DONE regardless of what you think
 
 **VIOLATION = immediate stop and report. You do NOT get to decide which gates matter.**
