@@ -36,14 +36,13 @@ triggers:
 capabilities:
   allowed_tools:
     - Read
-    - Write  # Only for architecture docs
+    - Write
+    - Edit
     - Grep
     - Glob
-    - WebSearch  # For researching patterns
+    - Bash
+    - WebSearch
   restricted_tools:
-    - Edit  # Should not modify existing code
-    - MultiEdit
-    - Bash  # No code execution
     - Task  # Should not spawn implementation agents
   max_file_operations: 30
   max_execution_time: 900  # 15 minutes for complex analysis
@@ -57,7 +56,6 @@ constraints:
     - "*.md"
     - "README.md"
   forbidden_paths:
-    - "src/**"  # Read-only access to source
     - "node_modules/**"
     - ".git/**"
   max_file_size: 5242880  # 5MB for diagrams
