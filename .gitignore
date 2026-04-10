@@ -52,6 +52,8 @@ project-work/*
 project-tasks/*
 !project-work/.gitkeep
 !project-tasks/.gitkeep
+/archon-cli/
+projecty-work/
 
 # Environment files (contain API keys and secrets)
 .env

@@ -243,6 +243,10 @@
           {
             "type": "command",
             "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/pipeline-integrity-guard.sh\" ] && \"$ROOT/.claude/hooks/pipeline-integrity-guard.sh\" || true'"
+          },
+          {
+            "type": "command",
+            "command": "/bin/bash -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n \"$ROOT\" ] && [ -x \"$ROOT/.claude/hooks/cargo-safety-enforcer.sh\" ] && cat | \"$ROOT/.claude/hooks/cargo-safety-enforcer.sh\" || exit 0'"
           }
         ]
       },

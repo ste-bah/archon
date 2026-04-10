@@ -1,12 +1,12 @@
 {
   "created": "2026-03-30T10:00:00Z",
-  "last_used": "2026-03-30T10:00:00Z",
+  "last_used": "2026-04-05T00:00:00Z",
   "version": 1,
   "generation": 0,
   "author": "user",
-  "invocation_count": 0,
+  "invocation_count": 1,
   "quality": {
-    "total_selections": 0,
+    "total_selections": 1,
     "total_completions": 0,
     "total_fallbacks": 0,
     "applied_rate": 0.0,
