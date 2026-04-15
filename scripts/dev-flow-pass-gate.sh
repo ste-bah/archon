@@ -26,29 +26,28 @@ TASK_ID="${1:?Usage: dev-flow-pass-gate.sh TASK-XXX gate-name 'evidence' [/path/
 GATE_NAME="${2:?Provide gate name (e.g., 03-sherlock-code-review)}"
 EVIDENCE="${3:?Provide evidence string or --exec}"
 
-# Work dir: explicit arg, or git root, or cwd
-if [ -n "${4:-}" ]; then
+# Detect special modes FIRST — before any WORK_DIR assignment.
+# This prevents $4 (the exec command string) from being misread as a path.
+EXEC_CMD=""
+USER_VERIFIED=false
+if [[ "$EVIDENCE" == "--exec" ]]; then
+    EXEC_CMD="${4:?--exec requires a command string}"
+elif [[ "$EVIDENCE" == "--user-verified" ]]; then
+    USER_VERIFIED=true
+    EVIDENCE="${4:-manual verification}"
+fi
+
+# Work dir: explicit arg ($5 for --exec, $4 otherwise), or git root, or cwd
+if [[ -n "$EXEC_CMD" && -n "${5:-}" ]]; then
+    WORK_DIR="$5"
+elif [[ "$USER_VERIFIED" == "true" && -n "${5:-}" ]]; then
+    WORK_DIR="$5"
+elif [[ "$EVIDENCE" != "--exec" && "$EVIDENCE" != "--user-verified" && -n "${4:-}" ]]; then
     WORK_DIR="$4"
 elif ROOT=$(git rev-parse --show-toplevel 2>/dev/null); then
     WORK_DIR="$ROOT"
 else
     WORK_DIR="$(pwd)"
-fi
-
-# Handle --exec mode for gate 5: shift args if 4th arg looks like a workdir
-EXEC_CMD=""
-USER_VERIFIED=false
-if [[ "$EVIDENCE" == "--exec" ]]; then
-    EXEC_CMD="${4:?--exec requires a command string}"
-    if [ -n "${5:-}" ]; then
-        WORK_DIR="$5"
-    fi
-elif [[ "$EVIDENCE" == "--user-verified" ]]; then
-    USER_VERIFIED=true
-    EVIDENCE="${4:-manual verification}"
-    if [ -n "${5:-}" ]; then
-        WORK_DIR="$5"
-    fi
 fi
 
 GATE_DIR="${WORK_DIR}/.gates/${TASK_ID}"
