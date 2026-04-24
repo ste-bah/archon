@@ -115,9 +115,20 @@ for known in $KNOWN_AGENTS; do
     fi
 done
 
+# Review-phase exemption: Gate 3 and Gate 6 are adversarial code reviews.
+# sherlock-holmes is the mandated reviewer regardless of the implementation
+# agent named in the spec. Only allow when the prompt clearly identifies a
+# review context so the exemption cannot be abused for implementation work.
+if [ "$SUBAGENT_TYPE" = "sherlock-holmes" ]; then
+    if echo "$PROMPT" | grep -qiE '(gate[- ]?3|gate[- ]?6|forensic|adversarial[[:space:]]+review|code[[:space:]]+review|coverage[[:space:]]+audit|gap[[:space:]]+audit|drift[- ]?reconcile|read-only[[:space:]]+audit|phase[[:space:]]+a[[:space:]]+audit)'; then
+        echo '{"decision": "allow"}'
+        exit 0
+    fi
+fi
+
 # If the spec agent is a known type and Claude is using something different, BLOCK
 if [ "$SPEC_AGENT_EXISTS" = "true" ]; then
-    echo '{"decision": "block", "reason": "AGENT TYPE MISMATCH: Task '"${TASK_ID}"' specifies Agent: '"${SPEC_AGENT}"' but you are spawning subagent_type: '"${SUBAGENT_TYPE}"'.\n\nThe task spec is the spec. Use subagent_type=\"'"${SPEC_AGENT}"'\" or explain why you cannot.\n\nSpec file: '"${SPEC_FILE}"'"}'
+    echo '{"decision": "block", "reason": "AGENT TYPE MISMATCH: Task '"${TASK_ID}"' specifies Agent: '"${SPEC_AGENT}"' but you are spawning subagent_type: '"${SUBAGENT_TYPE}"'.\n\nThe task spec is the spec. Use subagent_type=\"'"${SPEC_AGENT}"'\" or explain why you cannot.\n\nIf this is read-only audit/review work (not implementation), use subagent_type=\"sherlock-holmes\" AND include one of these phrases in your prompt: \"coverage audit\", \"gap audit\", \"drift-reconcile\", \"gate 3\", \"gate 6\", \"forensic\", \"adversarial review\", \"code review\", \"read-only audit\", \"phase a audit\".\n\nSpec file: '"${SPEC_FILE}"'"}'
     exit 0
 fi
 

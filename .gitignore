@@ -135,3 +135,8 @@ serena/.venv/
 # Agent version snapshots — backups from evolution (can be large)
 .claude/agents/versions/
 archon-v*.tar.gz
+deepseek.sh
+minmax.sh
+.claude/scheduled_tasks.lock
+archon-avatar.png:Zone.Identifier
+openrouter.sh
