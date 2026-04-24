@@ -4,6 +4,14 @@
 # Usage:
 #   ./scripts/dev-flow-pass-gate.sh TASK-XXX gate-name "evidence" [/path/to/work/dir]
 #   ./scripts/dev-flow-pass-gate.sh TASK-XXX 05-live-smoke-test --exec "command" [/path/to/work/dir]
+#   ./scripts/dev-flow-pass-gate.sh TASK-XXX 02-implementation-complete --skip-file-size "evidence" [/path/to/work/dir]
+#
+# Gate 2 auto-check (TASK-205 META-DEVFLOW-GATE2-FILESIZE):
+#   If `$WORK_DIR/scripts/check-file-sizes.sh` exists, Gate 2 runs it
+#   automatically and refuses to record on non-zero exit. Use the
+#   `--skip-file-size` flag (as the evidence-slot token, followed by a
+#   real evidence string) to bypass the check for genuine WIP commits —
+#   a WARN is emitted and the evidence is tagged `[SKIP-FILESIZE]`.
 #
 # Gate 5 has TWO modes:
 #   --exec "command"   — The script RUNS the command. Only passes if exit 0.
@@ -14,7 +22,7 @@
 #
 # Gate names (must be passed in order):
 #   01-tests-written-first      — Test files exist before implementation
-#   02-implementation-complete   — Code written and compiles
+#   02-implementation-complete   — Code written and compiles (+ FileSizeGuard)
 #   03-sherlock-code-review      — Sherlock adversarial review (must contain APPROVED/PASS)
 #   04-tests-passing             — All tests pass (include test count)
 #   05-live-smoke-test           — Feature actually invoked end-to-end (MUST USE --exec)
@@ -30,24 +38,33 @@ EVIDENCE="${3:?Provide evidence string or --exec}"
 # This prevents $4 (the exec command string) from being misread as a path.
 EXEC_CMD=""
 USER_VERIFIED=false
+SKIP_FILE_SIZE=false
+ORIG_EVIDENCE="$EVIDENCE"
 if [[ "$EVIDENCE" == "--exec" ]]; then
     EXEC_CMD="${4:?--exec requires a command string}"
 elif [[ "$EVIDENCE" == "--user-verified" ]]; then
     USER_VERIFIED=true
     EVIDENCE="${4:-manual verification}"
+elif [[ "$EVIDENCE" == "--skip-file-size" ]]; then
+    SKIP_FILE_SIZE=true
+    EVIDENCE="${4:?--skip-file-size requires evidence string}"
 fi
 
-# Work dir: explicit arg ($5 for --exec, $4 otherwise), or git root, or cwd
-if [[ -n "$EXEC_CMD" && -n "${5:-}" ]]; then
-    WORK_DIR="$5"
-elif [[ "$USER_VERIFIED" == "true" && -n "${5:-}" ]]; then
-    WORK_DIR="$5"
-elif [[ "$EVIDENCE" != "--exec" && "$EVIDENCE" != "--user-verified" && -n "${4:-}" ]]; then
-    WORK_DIR="$4"
-elif ROOT=$(git rev-parse --show-toplevel 2>/dev/null); then
-    WORK_DIR="$ROOT"
+# Work dir: for modes that consume $4, WORK_DIR is $5; otherwise $4.
+# Falls back to the git root, then cwd.
+if [[ "$ORIG_EVIDENCE" == "--exec" \
+   || "$ORIG_EVIDENCE" == "--user-verified" \
+   || "$ORIG_EVIDENCE" == "--skip-file-size" ]]; then
+    WORK_DIR="${5:-}"
 else
-    WORK_DIR="$(pwd)"
+    WORK_DIR="${4:-}"
+fi
+if [[ -z "$WORK_DIR" ]]; then
+    if ROOT=$(git rev-parse --show-toplevel 2>/dev/null); then
+        WORK_DIR="$ROOT"
+    else
+        WORK_DIR="$(pwd)"
+    fi
 fi
 
 GATE_DIR="${WORK_DIR}/.gates/${TASK_ID}"
@@ -91,6 +108,53 @@ if [[ "$GATE_NUM" != "01" ]]; then
         echo "ERROR: Cannot pass gate ${GATE_NAME} — previous gate (${PREV_NUM}-*) not yet passed."
         echo "Gates must be passed IN ORDER."
         exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Gate 2: FileSizeGuard auto-check (TASK-205 META-DEVFLOW-GATE2-FILESIZE).
+#
+# If $WORK_DIR/scripts/check-file-sizes.sh exists, run it and refuse to
+# record the gate on non-zero exit. `--skip-file-size` bypasses the check
+# with a WARN and tags the evidence. If the script doesn't exist, skip
+# silently — not every project uses this convention.
+# ---------------------------------------------------------------------------
+if [[ "$GATE_NAME" == "02-implementation-complete" ]]; then
+    if [[ "$SKIP_FILE_SIZE" == "true" ]]; then
+        echo ""
+        echo "⚠  WARN: --skip-file-size bypassed FileSizeGuard for Gate 2."
+        echo "   Use sparingly; file this cleanup on a follow-up ticket."
+        echo ""
+        EVIDENCE="[SKIP-FILESIZE] ${EVIDENCE}"
+    else
+        CHECK_SCRIPT="${WORK_DIR}/scripts/check-file-sizes.sh"
+        if [[ -x "$CHECK_SCRIPT" ]]; then
+            echo "Gate 2: running FileSizeGuard (${CHECK_SCRIPT})..."
+            set +e
+            CHECK_OUTPUT=$(bash "$CHECK_SCRIPT" 2>&1)
+            CHECK_EXIT=$?
+            set -e
+            if [[ $CHECK_EXIT -ne 0 ]]; then
+                echo ""
+                echo "================================================================"
+                echo "  GATE 2 BLOCKED — FileSizeGuard FAILED (exit $CHECK_EXIT)"
+                echo "================================================================"
+                echo ""
+                echo "$CHECK_OUTPUT"
+                echo ""
+                echo "  Fix: split oversize files, or allowlist with a follow-up ticket."
+                echo "  Bypass (WIP only):"
+                echo "    dev-flow-pass-gate.sh TASK-XXX 02-implementation-complete \\"
+                echo "      --skip-file-size \"evidence\" [WORK_DIR]"
+                echo ""
+                echo "================================================================"
+                exit 1
+            fi
+            EVIDENCE="${EVIDENCE} | FileSizeGuard: exit 0"
+        elif [[ -f "$CHECK_SCRIPT" ]]; then
+            echo "⚠  ${CHECK_SCRIPT} exists but is not executable — skipping FileSizeGuard."
+        fi
+        # else: script not present — silent skip (not every project has this)
     fi
 fi
 
